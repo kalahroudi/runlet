@@ -23,5 +23,6 @@ Each line is one spec and one PR. Build in order. Specs 001 to 007 give a workin
 | 017 | Go and Rust | Managed toolchains. Compiler errors shown plainly. | 016 |
 | 018 | Share | Link, preview card, network buttons, optional Gist. | 009, 014 |
 | 019 | Spotlight and Shortcuts | Search snippets, run from Shortcuts. | 004, 002 |
+| 020 | [Update from the app](020-self-update.md) (draft) | "Update RunLet" in the popover: fetch latest main, rebuild, relaunch. Source installs only. | 001 |
 
 Specs after 001 are written one at a time, just before they are built, so they reflect what the earlier PRs actually delivered.
