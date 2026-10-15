@@ -1,14 +1,14 @@
-import SwiftUI
+import AppKit
 
 @main
-struct RunLetApp: App {
-    @NSApplicationDelegateAdaptor(AppDelegate.self) private var delegate
+enum RunLetMain {
+    // The delegate must outlive `main`, because NSApplication only keeps a weak reference to it.
+    @MainActor static let delegate = AppDelegate()
 
-    var body: some Scene {
-        MenuBarExtra("RunLet", systemImage: "chevron.right.square") {
-            PopoverView()
-        }
-        .menuBarExtraStyle(.window)
+    @MainActor static func main() {
+        let app = NSApplication.shared
+        app.delegate = delegate
+        app.run()
     }
 }
 
@@ -18,6 +18,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         RLFont.load()
         Appearance.apply()
         NSApp.setActivationPolicy(.accessory)
+        StatusBarController.shared.install()
         Task { @MainActor in UpdateModel.shared.startAutoChecks() }
         NotificationCenter.default.addObserver(
             forName: NSWindow.willCloseNotification, object: nil, queue: .main
