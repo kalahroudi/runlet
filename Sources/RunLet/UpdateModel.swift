@@ -81,16 +81,17 @@ struct UpdateSection: View {
     @ObservedObject var model = UpdateModel.shared
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Version \(String(model.installedCommit.prefix(7)))").font(.callout.monospaced())
+        VStack(alignment: .leading, spacing: 10) {
+            RLSectionTitle("Version")
+            Text(String(model.installedCommit.prefix(7))).font(RLFont.mono(13))
             HStack {
-                Button("Check for updates") { model.check() }.disabled(model.isBusy)
-                if model.canUpdate { Button("Update RunLet") { model.update() }.disabled(model.isBusy) }
-                if model.isBusy { Button("Stop") { model.stop() } }
+                Button("Check for updates") { model.check() }.buttonStyle(.rl).disabled(model.isBusy)
+                if model.canUpdate { Button("Update RunLet") { model.update() }.buttonStyle(.rlPrimary).disabled(model.isBusy) }
+                if model.isBusy { Button("Stop") { model.stop() }.buttonStyle(.rl) }
             }
-            Text(model.status).foregroundStyle(.secondary)
+            Text(model.status).font(RLFont.body(13)).foregroundStyle(Color.rlMuted)
             if !model.log.isEmpty {
-                ScrollView { Text(model.log).font(.caption.monospaced()).frame(maxWidth: .infinity, alignment: .leading) }
+                ScrollView { Text(model.log).font(RLFont.mono(11)).frame(maxWidth: .infinity, alignment: .leading) }
                     .scrollIndicators(.hidden).frame(height: 80)
             }
         }
@@ -103,14 +104,9 @@ struct UpdateBanner: View {
 
     var body: some View {
         if model.canUpdate {
-            HStack {
-                Image(systemName: "arrow.down.circle.fill").foregroundStyle(.orange)
-                Text(model.status).font(.callout)
-                Spacer()
-                Button("Update") { AppActivation.openSettings() }
+            RLBanner(icon: "arrow.down.circle.fill", text: model.status) {
+                Button("Update") { AppActivation.openSettings() }.buttonStyle(.rlSmallPrimary)
             }
-            .padding(8)
-            .background(.orange.opacity(0.12), in: RoundedRectangle(cornerRadius: 8))
         }
     }
 }

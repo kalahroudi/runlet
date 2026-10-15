@@ -30,11 +30,12 @@ swiftc -sdk "$SDK" -target "$TARGET" -O -wmo -parse-as-library -module-name RunL
   -c Sources/RunLetCore/*.swift -o "$OUT/obj/RunLetCore.o"
 
 swiftc -sdk "$SDK" -target "$TARGET" -O -parse-as-library -module-name RunLet \
-  -I "$OUT/obj" Sources/RunLet/*.swift "$OUT/obj/RunLetCore.o" \
+  -I "$OUT/obj" Sources/RunLet/*.swift Sources/RunLet/Style/*.swift "$OUT/obj/RunLetCore.o" \
   -o "$APP/Contents/MacOS/RunLet"
 
 cp Resources/Info.plist "$APP/Contents/Info.plist"
 cp Resources/AppIcon.icns "$APP/Contents/Resources/AppIcon.icns"
+mkdir -p "$APP/Contents/Resources/Fonts"; cp Resources/Fonts/*.ttf "$APP/Contents/Resources/Fonts/"
 /usr/libexec/PlistBuddy -c "Add :RunLetCommit string $(git rev-parse HEAD 2>/dev/null || echo unknown)" "$APP/Contents/Info.plist"
 codesign --force --sign - "$APP" >/dev/null
 echo "Built $APP"

@@ -1,6 +1,6 @@
 # Spec 022: Visual style
 
-Status: Draft
+Status: In progress
 Depends on: 001
 Size estimate: M (about 350 lines including the bundled fonts as resources, excluding the font files)
 
@@ -8,7 +8,7 @@ Size estimate: M (about 350 lines including the bundled fonts as resources, excl
 The app works but looks like a developer placeholder: plain system text and default buttons. The approved mock (`docs/mock/runlet.html`) has a clear look: warm orange accent, rounded cards, soft borders, a display font for titles. Every later screen (quick-run popover 006, editor 005, preview 009) needs the same building blocks. This spec builds them once, applies them to what exists today, and leaves layouts to the specs that own them.
 
 ## Scope
-- A small design kit in `Sources/RunLet/Style/`: colour tokens, fonts, and a handful of SwiftUI components, matching the mock in light and dark.
+- A small design kit in `Sources/RunLet/Style/` (plus `Sources/RunLetCore/Palette.swift` for the testable colour values): colour tokens, fonts, and a handful of SwiftUI components, matching the mock in light and dark.
 - Apply the kit to the current popover (header, update banner, scratch box, footer), the main window placeholder, and the Settings window.
 - Bundle the three fonts from the mock as app resources (Bricolage Grotesque, Instrument Sans, JetBrains Mono, all under the SIL Open Font License), with a system-font fallback.
 
@@ -27,7 +27,7 @@ The app works but looks like a developer placeholder: plain system text and defa
 | surface 2 | #F6F8FB | #1D222B |
 | line | #DDE2EA | #2B323E |
 | ink | #14181F | #EDF0F5 |
-| muted | #667085 | #9AA4B5 |
+| muted | #5F6B7E (mock: #667085, darkened to reach 4.5:1 on the page background) | #9AA4B5 |
 | accent | #FF5B2E | #FF6B42 |
 | accent soft | #FFE9E2 | #3A2018 |
 | ok | #12A37A | #34D3A0 |
@@ -57,7 +57,7 @@ Titles use Bricolage Grotesque (700), body text Instrument Sans (400, 500, 600),
 - [ ] Titles, body and code use the three bundled fonts, and the app still works if the font files are removed.
 - [ ] Run is a primary button, other buttons are secondary, and all have a hover and a disabled state.
 - [ ] The update banner uses `RLBanner` and appears only when an update is available.
-- [ ] Text contrast of ink and muted on surface is at least 4.5:1 in both appearances (checked with a script or tool and noted in the PR).
+- [x] Text contrast of ink and muted on surface is at least 4.5:1 in both appearances (checked with a script or tool and noted in the PR).
 - [ ] A side-by-side screenshot of the popover and the mock is attached to the PR, and the product owner confirms it looks right.
 - [ ] `swift test` and `./scripts/build.sh` pass in CI.
 
