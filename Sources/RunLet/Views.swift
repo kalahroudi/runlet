@@ -14,11 +14,11 @@ struct PopoverView: View {
             .padding(14)
 
             HStack(spacing: 8) {
-                Button("Open in window ↗") { AppWindows.main.show() }.buttonStyle(.rlSmall)
-                Button("Settings…") { AppActivation.openSettings() }
+                Button("Open in window ↗") { StatusBarController.shared.close(); AppWindows.main.show() }.buttonStyle(.rlSmall)
+                Button("Settings…") { StatusBarController.shared.close(); AppActivation.openSettings() }
                     .buttonStyle(.rlSmall).keyboardShortcut(",")
                 Spacer()
-                Button("Quit") { NSApplication.shared.terminate(nil) }
+                Button("Quit") { StatusBarController.shared.close(); NSApplication.shared.terminate(nil) }
                     .buttonStyle(.rlSmall).keyboardShortcut("q")
             }
             .padding(.horizontal, 14).padding(.vertical, 10)
@@ -26,8 +26,6 @@ struct PopoverView: View {
             .overlay(alignment: .top) { Rectangle().fill(Color.rlLine).frame(height: 1) }
         }
         .frame(width: 380)
-        .background(Color.rlBackground)
-        .onAppear { UpdateModel.shared.checkIfStale() }
     }
 }
 
