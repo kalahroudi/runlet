@@ -9,8 +9,14 @@ Today the only way to update RunLet is to open a terminal in the repo and run `.
 
 ## Scope
 - A source-based updater for people who installed from this repo with `scripts/install.sh`. The app remembers the repo folder at install time.
-- An "Update RunLet" item in the popover and a "Check for updates" row in Settings > General showing the current commit and whether `main` has newer commits.
+- An "Update RunLet" item in the popover and an update status row in Settings > General showing the current commit and whether `main` has newer commits.
 - Progress and errors shown in plain words.
+
+## Quiet checks
+- A check never shows a spinner or message in the popover. The banner appears only when an update exists, and a failed check (offline, folder moved) is shown only as status text in Settings.
+- A check never touches the log or an update in progress.
+- git is run with no prompts (`GIT_TERMINAL_PROMPT=0`, ssh in batch mode) and without the optional index lock (`GIT_OPTIONAL_LOCKS=0`), so it cannot pop a dialog or collide with the person's own git commands. It fetches only `origin/main`.
+- No notifications, sounds or Dock bounce. At most one check runs at a time.
 
 ## Non-goals
 - Signed releases, notarization, Sparkle or any download of prebuilt apps. That needs a Developer ID and a release pipeline, and gets its own spec.
@@ -19,16 +25,16 @@ Today the only way to update RunLet is to open a terminal in the repo and run `.
 
 ## Behavior
 - `scripts/install.sh` writes `~/Library/Application Support/RunLet/install.json` with the repo path and the commit built (`{"repo": "...", "commit": "..."}`), and the build embeds the same commit in `Info.plist` as `RunLetCommit`.
-- Automatic check: about 3 seconds after launch and every 6 hours while the app runs. When an update is available the popover shows a banner ("N new changes" with an Update button that opens Settings). The "Update RunLet" button in Settings exists only while an update is available; when the app is up to date, only "Check for updates" is shown.
-- Check: runs `git fetch origin main` in the repo, then compares `origin/main` with the installed commit. Shown as "Up to date" or "N new changes".
+- Automatic check: about 3 seconds after launch, every 6 hours while the app runs, and when the popover opens (at most once every half hour). When an update is available the popover shows a banner ("N new changes" with an Update button that runs the update right there and shows progress in the banner; Settings shows the same status and log). The Update button exists only in that popover banner and only while an update is available. There is no manual "Check for updates" button: the app checks by itself (see above) and also when the popover opens, at most once every half hour. Settings shows the version, the current status and the update log. There is one Settings window.
+- Check (automatic only): runs `git fetch origin main` in the repo, then compares `origin/main` with the installed commit. Shown as "Up to date" or "N new changes".
 - Update: refuses with a clear message when the repo has uncommitted changes or is not on `main`, or when `install.json` is missing ("RunLet was not installed from source. Re-run scripts/install.sh once."). Otherwise it fast-forwards `main`, runs `scripts/install.sh` in a detached helper process, and the app quits so the helper can replace and relaunch it. If the build fails, the old app is left in place and the error is shown on the next launch.
 - Uses `ProcessRunner` from spec 002 for git and the build, so output is streamed to an "Update" log with a Stop button.
 
 ## Acceptance criteria
 - [x] After `scripts/install.sh`, `install.json` exists and the commit in it matches `git rev-parse HEAD`.
-- [ ] With a newer commit on `origin/main`, Check shows "1 new change"; with none, "Up to date".
-- [ ] With a newer commit on `origin/main`, the popover shows the update banner within seconds of launch without anyone clicking. With none, there is no banner and no Update button anywhere.
-- [ ] Update with newer commits pulls, rebuilds and relaunches the app, and Settings shows the new commit.
+- [x] With a newer commit on `origin/main`, the status shows "1 new change"; with none, "Up to date".
+- [x] With a newer commit on `origin/main`, the popover shows the update banner within seconds of launch without anyone clicking. With none, there is no banner and no Update button anywhere.
+- [x] Update with newer commits pulls, rebuilds and relaunches the app, and Settings shows the new commit.
 - [ ] Update refuses, without changing anything, when the repo has local changes or is on another branch.
 - [ ] A failing build leaves the old app installed and shows the error.
 - [ ] Missing `install.json` shows the re-install message.

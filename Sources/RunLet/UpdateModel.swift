@@ -7,7 +7,9 @@ final class UpdateModel: ObservableObject {
 
     @Published var status = "Not checked yet"
     @Published var log = ""
+    /// True only while an update runs. A background check never sets it, so the banner does not flicker.
     @Published var isBusy = false
+    @Published var isChecking = false
     @Published var canUpdate = false
 
     let installedCommit = Bundle.main.object(forInfoDictionaryKey: "RunLetCommit") as? String ?? "unknown"
@@ -27,15 +29,26 @@ final class UpdateModel: ObservableObject {
         }
     }
 
+    private var lastCheck = Date.distantPast
+
+    /// Called when the popover opens: checks again only if the last check is more than half an hour old.
+    func checkIfStale() {
+        if Date().timeIntervalSince(lastCheck) > 30 * 60 { check() }
+    }
+
+    /// A quiet background check. It never touches the log or an update in progress, and a failed check
+    /// (offline, folder moved) only changes the status text in Settings, never the popover.
     func check() {
-        guard !isBusy else { return }
-        isBusy = true; status = "Checking…"; log = ""
-        task = Task {
+        guard !isBusy, !isChecking else { return }
+        lastCheck = Date()
+        isChecking = true
+        Task {
             let (info, git) = await load()
+            isChecking = false
+            guard !isBusy else { return }
             let s = UpdatePlanner.status(info: info, git: git)
             status = s.text
             canUpdate = { if case .behind = s { true } else { false } }()
-            isBusy = false
         }
     }
 
@@ -69,8 +82,6 @@ final class UpdateModel: ObservableObject {
         }
     }
 
-    func stop() { task?.cancel(); isBusy = false; status = "Stopped" }
-
     private func load() async -> (InstallInfo?, GitState?) {
         guard let info = InstallInfo.load() else { return (nil, nil) }
         return (info, await GitClient.state(for: info))
@@ -84,12 +95,10 @@ struct UpdateSection: View {
         VStack(alignment: .leading, spacing: 10) {
             RLSectionTitle("Version")
             Text(String(model.installedCommit.prefix(7))).font(RLFont.mono(13))
-            HStack {
-                Button("Check for updates") { model.check() }.buttonStyle(.rl).disabled(model.isBusy)
-                if model.canUpdate { Button("Update RunLet") { model.update() }.buttonStyle(.rlPrimary).disabled(model.isBusy) }
-                if model.isBusy { Button("Stop") { model.stop() }.buttonStyle(.rl) }
+            Text(model.isChecking ? "Checking…" : model.status).font(RLFont.body(13)).foregroundStyle(Color.rlMuted)
+            if model.canUpdate && !model.isBusy {
+                Text("Use the Update button in the menu bar popover.").font(RLFont.body(12)).foregroundStyle(Color.rlMuted)
             }
-            Text(model.status).font(RLFont.body(13)).foregroundStyle(Color.rlMuted)
             if !model.log.isEmpty {
                 ScrollView { Text(model.log).font(RLFont.mono(11)).frame(maxWidth: .infinity, alignment: .leading) }
                     .scrollIndicators(.hidden).frame(height: 80)
@@ -105,7 +114,11 @@ struct UpdateBanner: View {
     var body: some View {
         if model.canUpdate {
             RLBanner(icon: "arrow.down.circle.fill", text: model.status) {
-                Button("Update") { AppActivation.openSettings() }.buttonStyle(.rlSmallPrimary)
+                if model.isBusy {
+                    ProgressView().controlSize(.small)
+                } else {
+                    Button("Update") { model.update() }.buttonStyle(.rlSmallPrimary)
+                }
             }
         }
     }

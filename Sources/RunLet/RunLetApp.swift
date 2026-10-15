@@ -9,10 +9,6 @@ struct RunLetApp: App {
             PopoverView()
         }
         .menuBarExtraStyle(.window)
-
-        Settings {
-            SettingsView()
-        }
     }
 }
 
