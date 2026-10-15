@@ -1,6 +1,6 @@
 # Spec 002: Runner core
 
-Status: Approved
+Status: In progress
 Depends on: 001
 Size estimate: M (about 300 lines including tests)
 
@@ -49,13 +49,13 @@ ProcessRunner.run(_ request: RunRequest) -> AsyncStream<RunEvent>
 - If no Python 3 is found: "Python 3 was not found. Install it with `brew install python`. RunLet will manage Python for you in a later update."
 
 ## Acceptance criteria
-- [ ] A shell command that prints to stdout and stderr produces both kinds of events, in order of arrival, and a `.finished` with exit code 0.
-- [ ] A command that exits with code 3 reports exit code 3 and outcome `.exited`.
-- [ ] A command that sleeps longer than the timeout is stopped, reports `.timedOut`, and returns in well under the sleep time.
-- [ ] Cancelling the task that consumes the events terminates the program.
-- [ ] A nonexistent executable reports `.failedToLaunch`.
-- [ ] Python: `print("hi")` outputs `hi` and exits 0. A script that raises prints a traceback on stderr and exits 1. Both tests are skipped when no interpreter is found.
-- [ ] The temporary folder no longer exists after a Python run.
+- [x] A shell command that prints to stdout and stderr produces both kinds of events, in order of arrival, and a `.finished` with exit code 0.
+- [x] A command that exits with code 3 reports exit code 3 and outcome `.exited`.
+- [x] A command that sleeps longer than the timeout is stopped, reports `.timedOut`, and returns in well under the sleep time.
+- [x] Cancelling the task that consumes the events terminates the program.
+- [x] A nonexistent executable reports `.failedToLaunch`.
+- [x] Python: `print("hi")` outputs `hi` and exits 0. A script that raises prints a traceback on stderr and exits 1. Both tests are skipped when no interpreter is found.
+- [x] The temporary folder no longer exists after a Python run.
 - [ ] In the app, Run shows streamed output, a runaway loop (`while True: pass`) is stopped by Stop and also by the time limit, and an error shows in red.
 - [ ] `swift test` and `./scripts/build.sh` pass in CI.
 
