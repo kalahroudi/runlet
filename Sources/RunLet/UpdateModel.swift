@@ -7,7 +7,9 @@ final class UpdateModel: ObservableObject {
 
     @Published var status = "Not checked yet"
     @Published var log = ""
+    /// True only while an update runs. A background check never sets it, so the banner does not flicker.
     @Published var isBusy = false
+    @Published var isChecking = false
     @Published var canUpdate = false
 
     let installedCommit = Bundle.main.object(forInfoDictionaryKey: "RunLetCommit") as? String ?? "unknown"
@@ -29,21 +31,24 @@ final class UpdateModel: ObservableObject {
 
     private var lastCheck = Date.distantPast
 
-    /// Called when the popover opens: checks again unless a check ran in the last five minutes.
+    /// Called when the popover opens: checks again only if the last check is more than half an hour old.
     func checkIfStale() {
-        if Date().timeIntervalSince(lastCheck) > 300 { check() }
+        if Date().timeIntervalSince(lastCheck) > 30 * 60 { check() }
     }
 
+    /// A quiet background check. It never touches the log or an update in progress, and a failed check
+    /// (offline, folder moved) only changes the status text in Settings, never the popover.
     func check() {
-        guard !isBusy else { return }
+        guard !isBusy, !isChecking else { return }
         lastCheck = Date()
-        isBusy = true; status = "Checking…"; log = ""
-        task = Task {
+        isChecking = true
+        Task {
             let (info, git) = await load()
+            isChecking = false
+            guard !isBusy else { return }
             let s = UpdatePlanner.status(info: info, git: git)
             status = s.text
             canUpdate = { if case .behind = s { true } else { false } }()
-            isBusy = false
         }
     }
 
@@ -90,7 +95,7 @@ struct UpdateSection: View {
         VStack(alignment: .leading, spacing: 10) {
             RLSectionTitle("Version")
             Text(String(model.installedCommit.prefix(7))).font(RLFont.mono(13))
-            Text(model.status).font(RLFont.body(13)).foregroundStyle(Color.rlMuted)
+            Text(model.isChecking ? "Checking…" : model.status).font(RLFont.body(13)).foregroundStyle(Color.rlMuted)
             if model.canUpdate && !model.isBusy {
                 Text("Use the Update button in the menu bar popover.").font(RLFont.body(12)).foregroundStyle(Color.rlMuted)
             }

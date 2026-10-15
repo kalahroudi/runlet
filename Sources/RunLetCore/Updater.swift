@@ -80,7 +80,16 @@ public enum GitClient {
     public static func run(_ args: [String], in repo: URL, timeout: TimeInterval = 60) async -> (code: Int32?, out: String) {
         var out = ""
         var code: Int32?
-        for await event in ProcessRunner.run(RunRequest(executable: git, arguments: args, workingDirectory: repo, timeout: timeout)) {
+        // Never prompt, never wait for a password, and never take the index lock, so a background check cannot
+        // interrupt the person or collide with their own git commands.
+        var environment = ProcessInfo.processInfo.environment
+        environment["GIT_TERMINAL_PROMPT"] = "0"
+        environment["GIT_OPTIONAL_LOCKS"] = "0"
+        environment["GIT_SSH_COMMAND"] = "ssh -o BatchMode=yes"
+        environment["HOME"] = environment["HOME"] ?? NSHomeDirectory()
+        let request = RunRequest(executable: git, arguments: args, workingDirectory: repo,
+                                 environment: environment, timeout: timeout)
+        for await event in ProcessRunner.run(request) {
             switch event {
             case .output(.stdout, let s): out += s
             case .output(.stderr, _): break
@@ -94,7 +103,7 @@ public enum GitClient {
     public static func state(for info: InstallInfo, fetch: Bool = true) async -> GitState? {
         let repo = URL(fileURLWithPath: info.repo)
         guard FileManager.default.fileExists(atPath: info.repo) else { return nil }
-        if fetch { _ = await run(["fetch", "origin", "main"], in: repo, timeout: 30) }
+        if fetch { _ = await run(["fetch", "--quiet", "--no-tags", "origin", "main"], in: repo, timeout: 30) }
         let branch = await run(["rev-parse", "--abbrev-ref", "HEAD"], in: repo)
         guard branch.code == 0 else { return nil }
         let dirty = await run(["status", "--porcelain"], in: repo)
