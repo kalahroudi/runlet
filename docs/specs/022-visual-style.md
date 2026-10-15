@@ -1,6 +1,6 @@
 # Spec 022: Visual style
 
-Status: In progress
+Status: Done
 Depends on: 001
 Size estimate: M (about 350 lines including the bundled fonts as resources, excluding the font files)
 
@@ -53,13 +53,13 @@ Titles use Bricolage Grotesque (700), body text Instrument Sans (400, 500, 600),
 - Scrolling areas hide the system scrollbar, as decided for spec 005.
 
 ## Acceptance criteria
-- [ ] The popover, main window and Settings use the tokens above in both light and dark appearance, and switch live when the system appearance or the Appearance setting changes. The setting survives a relaunch.
-- [ ] Titles, body and code use the three bundled fonts, and the app still works if the font files are removed.
-- [ ] Run is a primary button, other buttons are secondary, and all have a hover and a disabled state.
-- [ ] The update banner uses `RLBanner` and appears only when an update is available.
+- [x] The popover, main window and Settings use the tokens above in both light and dark appearance, and switch live when the system appearance or the Appearance setting changes. The setting survives a relaunch.
+- [x] Titles, body and code use the three bundled fonts, and the app still works if the font files are removed.
+- [x] Run is a primary button, other buttons are secondary, and all have a hover and a disabled state.
+- [x] The update banner uses `RLBanner` and appears only when an update is available.
 - [x] Text contrast of ink and muted on surface is at least 4.5:1 in both appearances (checked with a script or tool and noted in the PR).
-- [ ] A side-by-side screenshot of the popover and the mock is attached to the PR, and the product owner confirms it looks right.
-- [ ] `swift test` and `./scripts/build.sh` pass in CI.
+- [x] A side-by-side screenshot of the popover and the mock is attached to the PR, and the product owner confirms it looks right.
+- [x] `swift test` and `./scripts/build.sh` pass in CI.
 
 ## Test plan
 - Swift Testing tests for the token values (hex to colour) and the contrast helper in `RunLetCore`.
