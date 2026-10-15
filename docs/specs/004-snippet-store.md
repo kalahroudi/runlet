@@ -1,6 +1,6 @@
 # Spec 004: Snippet store
 
-Status: In progress
+Status: Done
 Depends on: 001
 Size estimate: M (about 300 lines including tests)
 
@@ -58,7 +58,7 @@ public final class SnippetStore {
 - [x] Ids such as `../x` or `a/b` are rejected for every method.
 - [x] `delete` removes the snippet from `list` and from the root folder.
 - [x] Unknown fields in `snippet.json` survive a save.
-- [ ] `swift test` and `./scripts/build.sh` pass in CI.
+- [x] `swift test` and `./scripts/build.sh` pass in CI.
 
 ## Test plan
 - Swift Testing tests in `RunLetCoreTests` using a temporary root for every case above. Deletion tests use the removal fallback, since the Trash is not predictable in CI.

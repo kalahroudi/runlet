@@ -37,7 +37,7 @@ final class SettingsWindow: NSObject, ManagedWindow, NSWindowDelegate {
 
     override init() {
         window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 460, height: 300),
+            contentRect: NSRect(x: 0, y: 0, width: 460, height: 400),
             styleMask: [.titled, .closable],
             backing: .buffered, defer: false
         )

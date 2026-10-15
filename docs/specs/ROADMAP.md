@@ -7,7 +7,7 @@ Each line is one spec and one PR. Build in order. Specs 001 to 007 give a workin
 | 001 | [App shell](001-app-shell.md) (done) | Menu bar app that launches, shows a popover, opens a window and settings. CI builds it. | none |
 | 002 | Runner core | Run a Python string as a child process. Stream output, enforce a time limit, report exit status. | 001 |
 | 003 | Managed Python | Download and cache `uv` and Python 3.13. Create a fresh environment per snippet. | 002 |
-| 004 | [Snippet store](004-snippet-store.md) (draft) | Save snippets as files on disk with metadata. List, open, rename, delete. | 001 |
+| 004 | [Snippet store](004-snippet-store.md) (done) | Save snippets as files on disk with metadata. List, open, rename, delete. | 001 |
 | 005 | [Editor and console](005-editor-console.md) (draft) | Window with a web-view editor (CodeMirror), Run button, console output. Scrolling areas hide the system scrollbar and use a styled, minimal scroll affordance (editor, console). | 002, 004 |
 | 006 | Quick run popover | Paste into the menu bar popover, detect language, run, see output. | 002, 004 |
 | 007 | Missing packages (Python) | Detect imports, show the install bar, install on confirm, warn on unfamiliar names. | 003, 005 |
@@ -25,5 +25,6 @@ Each line is one spec and one PR. Build in order. Specs 001 to 007 give a workin
 | 019 | Spotlight and Shortcuts | Search snippets, run from Shortcuts. | 004, 002 |
 | 020 | [Update from the app](020-self-update.md)  | "Update RunLet" in the popover: fetch latest main, rebuild, relaunch. Source installs only. | 001 |
 | 021 | Signed downloads and updates | Developer ID signing, notarization, release builds and in-app updates (Sparkle) for people who do not build from source. | 020 |
+| 022 | [Visual style](022-visual-style.md) (draft) | Design kit from the mock (colours, fonts, buttons, cards) applied to the popover, main window and Settings. | 001 |
 
 Specs after 001 are written one at a time, just before they are built, so they reflect what the earlier PRs actually delivered.
