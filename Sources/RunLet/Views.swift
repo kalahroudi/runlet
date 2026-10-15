@@ -48,6 +48,7 @@ struct SettingsView: View {
         TabView {
             VStack(alignment: .leading, spacing: 14) {
                 Text("Settings").font(RLFont.display(22))
+                RLCard { AppearanceSection().frame(maxWidth: .infinity, alignment: .leading) }
                 RLCard { UpdateSection().frame(maxWidth: .infinity, alignment: .leading) }
             }
             .padding(20)
@@ -60,6 +61,6 @@ struct SettingsView: View {
                 .background(Color.rlBackground)
                 .tabItem { Label("Agents", systemImage: "sparkles") }
         }
-        .frame(width: 460, height: 300)
+        .frame(width: 460, height: 400)
     }
 }

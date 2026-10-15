@@ -15,7 +15,6 @@ The app works but looks like a developer placeholder: plain system text and defa
 ## Non-goals
 - The quick-run popover layout from the mock (search box, language chips, mini editor, recent snippets). That is spec 006.
 - The editor and console (005), preview pane (009), agents card (012).
-- A theme picker. The app follows the system light or dark appearance.
 - Animations beyond a hover state.
 
 ## Behavior
@@ -50,10 +49,11 @@ Titles use Bricolage Grotesque (700), body text Instrument Sans (400, 500, 600),
 - Popover: title in the display font, a card around the scratch box, primary Run button, footer strip on surface 2 with "Open in window" and the version. The update banner becomes `RLBanner`.
 - Main window: surface background, title in the display font.
 - Settings: card sections, `RLButton`s, mono version string.
+- Settings has an Appearance control (System, Light, Dark), saved in the app's preferences and applied to all windows at once. System is the default. (Added at the product owner's request so both looks can be checked.)
 - Scrolling areas hide the system scrollbar, as decided for spec 005.
 
 ## Acceptance criteria
-- [ ] The popover, main window and Settings use the tokens above in both light and dark appearance, and switch live when the system appearance changes.
+- [ ] The popover, main window and Settings use the tokens above in both light and dark appearance, and switch live when the system appearance or the Appearance setting changes. The setting survives a relaunch.
 - [ ] Titles, body and code use the three bundled fonts, and the app still works if the font files are removed.
 - [ ] Run is a primary button, other buttons are secondary, and all have a hover and a disabled state.
 - [ ] The update banner uses `RLBanner` and appears only when an update is available.
