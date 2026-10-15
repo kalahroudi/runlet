@@ -60,7 +60,7 @@ Rules, checked in this order (a port of the mock): Go (`func … {` or `package 
 - Manual: the paste, run, stop, recent and light/dark checks above, listed in the PR. Screenshots are rendered the same way as for spec 022.
 
 ## Risks and open questions
-- Pasted text in a plain monospaced box has no highlighting, which will feel basic next to the mock. Accepted until spec 005 adds CodeMirror; confirm that is fine for now.
+- Pasted text in a plain monospaced box has no highlighting, which will feel basic next to the mock. Accepted by the product owner, because the editor (spec 005) is already in the pipeline, so this is not a gap.
 - Detection by regular expression is crude (a Python file containing `const` in a string would be misread). Python is the default when nothing else matches, and the person can still run it. Better detection is a later spec.
-- "Saved on Run only" means a crash before Run loses edits. Autosave in spec 005 removes this.
+- "Saved on Run only" means a crash before Run loses edits. Accepted by the product owner. Autosave in spec 005 removes this.
 - Relative time for older snippets: use "Mon" style names within a week, then a short date.
