@@ -7,7 +7,7 @@ Each line is one spec and one PR. Build in order. Specs 001 to 007 give a workin
 | 001 | [App shell](001-app-shell.md) (done) | Menu bar app that launches, shows a popover, opens a window and settings. CI builds it. | none |
 | 002 | Runner core | Run a Python string as a child process. Stream output, enforce a time limit, report exit status. | 001 |
 | 003 | Managed Python | Download and cache `uv` and Python 3.13. Create a fresh environment per snippet. | 002 |
-| 004 | Snippet store | Save snippets as files on disk with metadata. List, open, rename, delete. | 001 |
+| 004 | [Snippet store](004-snippet-store.md) (draft) | Save snippets as files on disk with metadata. List, open, rename, delete. | 001 |
 | 005 | Editor and console | Window with a web-view editor (CodeMirror), Run button, console output. Scrolling areas hide the system scrollbar and use a styled, minimal scroll affordance (editor, console). | 002, 004 |
 | 006 | Quick run popover | Paste into the menu bar popover, detect language, run, see output. | 002, 004 |
 | 007 | Missing packages (Python) | Detect imports, show the install bar, install on confirm, warn on unfamiliar names. | 003, 005 |
