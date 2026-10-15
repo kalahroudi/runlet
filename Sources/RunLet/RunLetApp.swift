@@ -20,6 +20,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         // Menu bar only until a window is open. Info.plist sets the same for the bundled app.
         NSApp.setActivationPolicy(.accessory)
+        Task { @MainActor in UpdateModel.shared.startAutoChecks() }
         NotificationCenter.default.addObserver(
             forName: NSWindow.willCloseNotification, object: nil, queue: .main
         ) { _ in

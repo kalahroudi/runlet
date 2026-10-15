@@ -19,6 +19,7 @@ Today the only way to update RunLet is to open a terminal in the repo and run `.
 
 ## Behavior
 - `scripts/install.sh` writes `~/Library/Application Support/RunLet/install.json` with the repo path and the commit built (`{"repo": "...", "commit": "..."}`), and the build embeds the same commit in `Info.plist` as `RunLetCommit`.
+- Automatic check: about 3 seconds after launch and every 6 hours while the app runs. When an update is available the popover shows a banner ("N new changes" with an Update button that opens Settings). The "Update RunLet" button in Settings exists only while an update is available; when the app is up to date, only "Check for updates" is shown.
 - Check: runs `git fetch origin main` in the repo, then compares `origin/main` with the installed commit. Shown as "Up to date" or "N new changes".
 - Update: refuses with a clear message when the repo has uncommitted changes or is not on `main`, or when `install.json` is missing ("RunLet was not installed from source. Re-run scripts/install.sh once."). Otherwise it fast-forwards `main`, runs `scripts/install.sh` in a detached helper process, and the app quits so the helper can replace and relaunch it. If the build fails, the old app is left in place and the error is shown on the next launch.
 - Uses `ProcessRunner` from spec 002 for git and the build, so output is streamed to an "Update" log with a Stop button.
@@ -26,6 +27,7 @@ Today the only way to update RunLet is to open a terminal in the repo and run `.
 ## Acceptance criteria
 - [x] After `scripts/install.sh`, `install.json` exists and the commit in it matches `git rev-parse HEAD`.
 - [ ] With a newer commit on `origin/main`, Check shows "1 new change"; with none, "Up to date".
+- [ ] With a newer commit on `origin/main`, the popover shows the update banner within seconds of launch without anyone clicking. With none, there is no banner and no Update button anywhere.
 - [ ] Update with newer commits pulls, rebuilds and relaunches the app, and Settings shows the new commit.
 - [ ] Update refuses, without changing anything, when the repo has local changes or is on another branch.
 - [ ] A failing build leaves the old app installed and shows the error.

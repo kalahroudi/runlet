@@ -5,6 +5,7 @@ struct PopoverView: View {
         VStack(alignment: .leading, spacing: 12) {
             Text("RunLet").font(.title2.weight(.bold))
             Text("Quick code, anywhere.").foregroundStyle(.secondary)
+            UpdateBanner()
             Divider()
             ScratchRunView()
             Divider()
@@ -12,7 +13,6 @@ struct PopoverView: View {
                 Button("Open in window") { AppWindows.main.show() }
                 Button("Settings…") { AppActivation.openSettings() }
                     .keyboardShortcut(",")
-                Button("Update") { AppActivation.openSettings(); UpdateModel.shared.check() }
                 Spacer()
                 Button("Quit") { NSApplication.shared.terminate(nil) }
                     .keyboardShortcut("q")

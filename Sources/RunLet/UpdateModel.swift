@@ -11,7 +11,21 @@ final class UpdateModel: ObservableObject {
     @Published var canUpdate = false
 
     let installedCommit = Bundle.main.object(forInfoDictionaryKey: "RunLetCommit") as? String ?? "unknown"
+    static var logURL: URL { InstallInfo.defaultURL.deletingLastPathComponent().appendingPathComponent("update.log") }
     private var task: Task<Void, Never>?
+    private var timer: Timer?
+
+    /// Checks shortly after launch and then every six hours, so an available update shows up without anyone asking.
+    func startAutoChecks() {
+        guard timer == nil else { return }
+        timer = Timer.scheduledTimer(withTimeInterval: 6 * 3600, repeats: true) { _ in
+            Task { @MainActor in UpdateModel.shared.check() }
+        }
+        Task {
+            try? await Task.sleep(nanoseconds: 3_000_000_000)
+            check()
+        }
+    }
 
     func check() {
         guard !isBusy else { return }
@@ -37,7 +51,7 @@ final class UpdateModel: ObservableObject {
             let repo = URL(fileURLWithPath: info.repo)
             let pull = await GitClient.run(["merge", "--ff-only", "origin/main"], in: repo)
             guard pull.code == 0 else {
-                status = "Could not fast-forward main."; log = pull.out; isBusy = false; return
+                status = "Could not fast-forward main."; log = pull.out; try? log.write(to: Self.logURL, atomically: true, encoding: .utf8); isBusy = false; return
             }
             // install.sh builds first and only then replaces and relaunches the app, so a failed build leaves this app running.
             var failed = false
@@ -49,7 +63,8 @@ final class UpdateModel: ObservableObject {
                 case .finished(let r): failed = r.outcome != .exited || r.exitCode != 0
                 }
             }
-            if failed { status = "The update failed. The old version is still installed." }
+            if failed { status = "The update failed. The old version is still installed. Log: \(Self.logURL.path)" }
+            try? log.write(to: Self.logURL, atomically: true, encoding: .utf8)
             isBusy = false
         }
     }
@@ -70,7 +85,7 @@ struct UpdateSection: View {
             Text("Version \(String(model.installedCommit.prefix(7)))").font(.callout.monospaced())
             HStack {
                 Button("Check for updates") { model.check() }.disabled(model.isBusy)
-                Button("Update RunLet") { model.update() }.disabled(model.isBusy || !model.canUpdate)
+                if model.canUpdate { Button("Update RunLet") { model.update() }.disabled(model.isBusy) }
                 if model.isBusy { Button("Stop") { model.stop() } }
             }
             Text(model.status).foregroundStyle(.secondary)
@@ -78,6 +93,24 @@ struct UpdateSection: View {
                 ScrollView { Text(model.log).font(.caption.monospaced()).frame(maxWidth: .infinity, alignment: .leading) }
                     .scrollIndicators(.hidden).frame(height: 80)
             }
+        }
+    }
+}
+
+/// Shown at the top of the popover only while an update is available.
+struct UpdateBanner: View {
+    @ObservedObject var model = UpdateModel.shared
+
+    var body: some View {
+        if model.canUpdate {
+            HStack {
+                Image(systemName: "arrow.down.circle.fill").foregroundStyle(.orange)
+                Text(model.status).font(.callout)
+                Spacer()
+                Button("Update") { AppActivation.openSettings() }
+            }
+            .padding(8)
+            .background(.orange.opacity(0.12), in: RoundedRectangle(cornerRadius: 8))
         }
     }
 }
