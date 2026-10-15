@@ -16,6 +16,13 @@ enum AppActivation {
 
     static func openSettings() {
         showInDock()
-        NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
+        // The switch from menu-bar-only to a regular app is not instant. Sending the action in the same
+        // turn finds no window handler and nothing opens, leaving only a Dock icon.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+            NSApp.activate(ignoringOtherApps: true)
+            if !NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil) {
+                NSApp.sendAction(Selector(("showPreferencesWindow:")), to: nil, from: nil)
+            }
+        }
     }
 }
