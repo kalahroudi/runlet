@@ -15,18 +15,18 @@ Everything else needs a running app to live in. This spec produces a Mac app tha
 - A build that needs only the Xcode Command Line Tools, producing a signed-ad-hoc `RunLet.app`, plus a one-command install script.
 - A CI workflow that builds and tests on every PR.
 - App icon and a README with install steps for people and for agents.
-- A test target with one real test.
+- A test target covering the window coordinator.
 
 ## Non-goals
 - Running any code, saving snippets, agents, capture, sharing.
-- Final icon artwork. Use a placeholder SF Symbol for the menu bar and a plain app icon set.
+- Final icon artwork for the menu bar. It uses a placeholder SF Symbol. The app icon is the one from the design mock.
 - Code signing, notarization and Sparkle updates (a later spec).
 
 ## Behavior
 - Launching the app shows a menu bar icon and no Dock icon (`LSUIElement`).
 - Clicking the icon opens a popover (SwiftUI `MenuBarExtra` with the window style, about 380 pt wide). It shows the text "RunLet", a button "Open in window" and a button "Quit".
 - "Open in window" opens one main window titled "RunLet" with placeholder content. Pressing it again brings the existing window to the front instead of opening a second one. While the window is open the app also appears in the Dock and the app switcher; closing it returns to menu-bar-only.
-- ⌘, opens a Settings window with an "Agents" and a "General" tab, both showing placeholder text.
+- "Settings…" (⌘, while the popover is focused) opens a Settings window with a "General" and an "Agents" tab, both showing placeholder text.
 - Structure: `Sources/RunLet` (the app), `Sources/RunLetCore` (logic that can be tested without a UI), `Tests/RunLetCoreTests`.
 - Build tooling (changed from the first draft, which assumed Xcode and XcodeGen): a Swift package describes the targets for Xcode and CI. `scripts/build.sh` compiles with `swiftc` directly and assembles `build/RunLet.app`, so a Mac with only the Command Line Tools can build it. `scripts/install.sh` builds, copies to `/Applications` and opens the app.
 
@@ -43,7 +43,7 @@ Everything else needs a running app to live in. This spec produces a Mac app tha
 
 ## Test plan
 - Unit test for the window coordinator.
-- Manual: launch from Xcode, walk through the criteria above, note the result in the PR.
+- Manual: run `./scripts/install.sh`, walk through the criteria above, note the result in the PR.
 
 ## Risks and open questions
 - Bundle identifier is a placeholder (`com.runlet.app`). Confirm the real one before the signing spec.
