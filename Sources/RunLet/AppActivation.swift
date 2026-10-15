@@ -15,7 +15,6 @@ enum AppActivation {
     }
 
     static func openSettings() {
-        showInDock()
-        NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
+        AppWindows.settings.show()
     }
 }
