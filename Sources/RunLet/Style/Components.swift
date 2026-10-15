@@ -84,7 +84,7 @@ struct RLBanner<Trailing: View>: View {
     var body: some View {
         HStack(spacing: 8) {
             Image(systemName: icon).foregroundStyle(Color.rlAccent)
-            Text(text).font(RLFont.body(13, .medium)).foregroundStyle(Color.rlInk)
+            Text(text).font(RLFont.body(13, .medium)).foregroundStyle(Color.rlInk).lineLimit(3).fixedSize(horizontal: false, vertical: true)
             Spacer(minLength: 8)
             trailing
         }

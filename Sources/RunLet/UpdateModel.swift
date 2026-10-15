@@ -105,7 +105,11 @@ struct UpdateBanner: View {
     var body: some View {
         if model.canUpdate {
             RLBanner(icon: "arrow.down.circle.fill", text: model.status) {
-                Button("Update") { AppActivation.openSettings() }.buttonStyle(.rlSmallPrimary)
+                if model.isBusy {
+                    ProgressView().controlSize(.small)
+                } else {
+                    Button("Update") { model.update() }.buttonStyle(.rlSmallPrimary)
+                }
             }
         }
     }
