@@ -25,7 +25,7 @@ Nothing in RunLet matters until it can run code. This spec adds the engine that 
 ```swift
 public struct RunRequest { executable: URL; arguments: [String]; workingDirectory: URL?; environment: [String: String]?; timeout: TimeInterval }
 public enum OutputStream { case stdout, stderr }
-public enum Outcome: Equatable { case exited, timedOut, cancelled, failedToLaunch(String) }
+public enum Outcome: Equatable { case exited, timedOut, failedToLaunch(String) }
 public struct RunResult: Equatable { exitCode: Int32?; outcome: Outcome; duration: TimeInterval }
 public enum RunEvent: Equatable { case output(OutputStream, String); case finished(RunResult) }
 ProcessRunner.run(_ request: RunRequest) -> AsyncStream<RunEvent>
@@ -34,7 +34,7 @@ ProcessRunner.run(_ request: RunRequest) -> AsyncStream<RunEvent>
 - Exactly one `.finished` event is sent, last.
 - Standard input is empty, so a program that waits for input ends instead of hanging.
 - When the timeout passes, the program gets a terminate signal, and a kill after one more second if it is still running. The outcome is `.timedOut`.
-- When the consuming task is cancelled, the program is terminated. The outcome is `.cancelled`.
+- When the task consuming the events is cancelled, the program is terminated. There is no result to report in that case. Leaving the loop early without cancelling does not stop the program.
 - If the program cannot start, the single event is `.finished` with `.failedToLaunch(reason)`.
 
 ### PythonRunner (in `RunLetCore`)
@@ -52,7 +52,7 @@ ProcessRunner.run(_ request: RunRequest) -> AsyncStream<RunEvent>
 - [ ] A shell command that prints to stdout and stderr produces both kinds of events, in order of arrival, and a `.finished` with exit code 0.
 - [ ] A command that exits with code 3 reports exit code 3 and outcome `.exited`.
 - [ ] A command that sleeps longer than the timeout is stopped, reports `.timedOut`, and returns in well under the sleep time.
-- [ ] Cancelling the consuming task terminates the program and reports `.cancelled`.
+- [ ] Cancelling the task that consumes the events terminates the program.
 - [ ] A nonexistent executable reports `.failedToLaunch`.
 - [ ] Python: `print("hi")` outputs `hi` and exits 0. A script that raises prints a traceback on stderr and exits 1. Both tests are skipped when no interpreter is found.
 - [ ] The temporary folder no longer exists after a Python run.
