@@ -35,6 +35,14 @@ func shell(_ script: String, timeout: TimeInterval = 5) -> AsyncStream<RunEvent>
         #expect(out.result?.outcome == .exited)
     }
 
+    @Test func fastProgramsNeverLoseOutput() async {
+        for i in 0..<200 {
+            let out = await collect(shell("echo \(i); echo e\(i) 1>&2"))
+            #expect(out.stdout == "\(i)\n")
+            #expect(out.stderr == "e\(i)\n")
+        }
+    }
+
     @Test func reportsExitCode() async {
         let out = await collect(shell("exit 3"))
         #expect(out.result?.exitCode == 3)

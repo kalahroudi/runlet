@@ -64,27 +64,29 @@ public enum ProcessRunner {
             let stop = StopReason()
             let start = Date()
 
-            stream(stdout, as: .stdout, into: continuation)
-            stream(stderr, as: .stderr, into: continuation)
+            let readers = DispatchGroup()
+            stream(stdout, as: .stdout, into: continuation, group: readers)
+            stream(stderr, as: .stderr, into: continuation, group: readers)
 
             process.terminationHandler = { finished in
-                for (pipe, kind) in [(stdout, StreamKind.stdout), (stderr, .stderr)] {
-                    pipe.fileHandleForReading.readabilityHandler = nil
-                    if let rest = try? pipe.fileHandleForReading.readToEnd(), !rest.isEmpty {
-                        continuation.yield(.output(kind, String(decoding: rest, as: UTF8.self)))
-                    }
+                // Wait for both readers to reach end of file so no output is lost. A grandchild that keeps
+                // a pipe open must not hold the result back forever.
+                DispatchQueue.global().async {
+                    _ = readers.wait(timeout: .now() + 2)
+                    continuation.yield(.finished(RunResult(
+                        exitCode: finished.terminationStatus,
+                        outcome: stop.value ?? .exited,
+                        duration: Date().timeIntervalSince(start)
+                    )))
+                    continuation.finish()
                 }
-                continuation.yield(.finished(RunResult(
-                    exitCode: finished.terminationStatus,
-                    outcome: stop.value ?? .exited,
-                    duration: Date().timeIntervalSince(start)
-                )))
-                continuation.finish()
             }
 
             do {
                 try process.run()
             } catch {
+                try? stdout.fileHandleForWriting.close()
+                try? stderr.fileHandleForWriting.close()
                 continuation.yield(.finished(RunResult(
                     exitCode: nil, outcome: .failedToLaunch(error.localizedDescription), duration: 0)))
                 continuation.finish()
@@ -103,15 +105,18 @@ public enum ProcessRunner {
         }
     }
 
+    /// Reads a pipe on its own queue until end of file, in order, and leaves the group when done.
     private static func stream(_ pipe: Pipe, as kind: StreamKind,
-                               into continuation: AsyncStream<RunEvent>.Continuation) {
-        pipe.fileHandleForReading.readabilityHandler = { handle in
-            let data = handle.availableData
-            if data.isEmpty {
-                handle.readabilityHandler = nil
-            } else {
+                               into continuation: AsyncStream<RunEvent>.Continuation, group: DispatchGroup) {
+        group.enter()
+        DispatchQueue.global().async {
+            let handle = pipe.fileHandleForReading
+            while true {
+                let data = handle.availableData
+                if data.isEmpty { break }
                 continuation.yield(.output(kind, String(decoding: data, as: UTF8.self)))
             }
+            group.leave()
         }
     }
 

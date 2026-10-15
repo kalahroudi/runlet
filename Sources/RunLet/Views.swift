@@ -12,6 +12,7 @@ struct PopoverView: View {
                 Button("Open in window") { AppWindows.main.show() }
                 Button("Settings…") { AppActivation.openSettings() }
                     .keyboardShortcut(",")
+                Button("Update") { AppActivation.openSettings(); UpdateModel.shared.check() }
                 Spacer()
                 Button("Quit") { NSApplication.shared.terminate(nil) }
                     .keyboardShortcut("q")
@@ -35,13 +36,14 @@ struct MainWindowView: View {
 struct SettingsView: View {
     var body: some View {
         TabView {
-            Text("General settings will appear here.")
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            UpdateSection()
+                .padding(20)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
                 .tabItem { Label("General", systemImage: "gearshape") }
             Text("Connected agents will appear here.")
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .tabItem { Label("Agents", systemImage: "sparkles") }
         }
-        .frame(width: 460, height: 280)
+        .frame(width: 460, height: 300)
     }
 }
