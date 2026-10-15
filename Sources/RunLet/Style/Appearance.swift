@@ -2,14 +2,16 @@ import SwiftUI
 import AppKit
 import RunLetCore
 
+@MainActor
 enum Appearance {
     /// Applies the saved choice to every window of the app.
-    static func apply(_ choice: AppearanceChoice = current) {
-        switch choice {
+    static func apply(_ chosen: AppearanceChoice? = nil) {
+        switch chosen ?? current {
         case .system: NSApp.appearance = nil
         case .light: NSApp.appearance = NSAppearance(named: .aqua)
         case .dark: NSApp.appearance = NSAppearance(named: .darkAqua)
         }
+        StatusBarController.shared.applyAppearance()
     }
 
     static var current: AppearanceChoice {

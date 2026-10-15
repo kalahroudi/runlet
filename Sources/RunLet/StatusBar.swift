@@ -22,6 +22,14 @@ final class StatusBarController: NSObject, NSPopoverDelegate {
         popover.contentViewController = host
         popover.behavior = .transient   // closes on a click outside and on Esc
         popover.delegate = self
+        applyAppearance()
+    }
+
+    /// An NSPopover keeps its own appearance and does not follow the app's, so pass the choice on.
+    /// `nil` means follow the system.
+    func applyAppearance() {
+        popover.appearance = NSApp.appearance
+        popover.contentViewController?.view.appearance = NSApp.appearance
     }
 
     var isShown: Bool { popover.isShown }
