@@ -6,6 +6,8 @@ struct PopoverView: View {
             Text("RunLet").font(.title2.weight(.bold))
             Text("Quick code, anywhere.").foregroundStyle(.secondary)
             Divider()
+            ScratchRunView()
+            Divider()
             HStack {
                 Button("Open in window") { AppWindows.main.show() }
                 Button("Settings…") { AppActivation.openSettings() }
