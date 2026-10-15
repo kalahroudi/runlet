@@ -1,6 +1,6 @@
 import Foundation
 
-public enum OutputStream: Sendable, Equatable {
+public enum StreamKind: Sendable, Equatable {
     case stdout, stderr
 }
 
@@ -23,7 +23,7 @@ public struct RunResult: Sendable, Equatable {
 }
 
 public enum RunEvent: Sendable, Equatable {
-    case output(OutputStream, String)
+    case output(StreamKind, String)
     case finished(RunResult)
 }
 
@@ -68,7 +68,7 @@ public enum ProcessRunner {
             stream(stderr, as: .stderr, into: continuation)
 
             process.terminationHandler = { finished in
-                for (pipe, kind) in [(stdout, OutputStream.stdout), (stderr, .stderr)] {
+                for (pipe, kind) in [(stdout, StreamKind.stdout), (stderr, .stderr)] {
                     pipe.fileHandleForReading.readabilityHandler = nil
                     if let rest = try? pipe.fileHandleForReading.readToEnd(), !rest.isEmpty {
                         continuation.yield(.output(kind, String(decoding: rest, as: UTF8.self)))
@@ -103,7 +103,7 @@ public enum ProcessRunner {
         }
     }
 
-    private static func stream(_ pipe: Pipe, as kind: OutputStream,
+    private static func stream(_ pipe: Pipe, as kind: StreamKind,
                                into continuation: AsyncStream<RunEvent>.Continuation) {
         pipe.fileHandleForReading.readabilityHandler = { handle in
             let data = handle.availableData

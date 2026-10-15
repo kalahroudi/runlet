@@ -5,7 +5,7 @@ import Testing
 struct Collected {
     var stdout = ""
     var stderr = ""
-    var order: [OutputStream] = []
+    var order: [StreamKind] = []
     var result: RunResult?
 }
 

@@ -24,10 +24,10 @@ Nothing in RunLet matters until it can run code. This spec adds the engine that 
 ### ProcessRunner (in `RunLetCore`)
 ```swift
 public struct RunRequest { executable: URL; arguments: [String]; workingDirectory: URL?; environment: [String: String]?; timeout: TimeInterval }
-public enum OutputStream { case stdout, stderr }
+public enum StreamKind { case stdout, stderr }
 public enum Outcome: Equatable { case exited, timedOut, failedToLaunch(String) }
 public struct RunResult: Equatable { exitCode: Int32?; outcome: Outcome; duration: TimeInterval }
-public enum RunEvent: Equatable { case output(OutputStream, String); case finished(RunResult) }
+public enum RunEvent: Equatable { case output(StreamKind, String); case finished(RunResult) }
 ProcessRunner.run(_ request: RunRequest) -> AsyncStream<RunEvent>
 ```
 - Output arrives as it is produced, not only at the end.
