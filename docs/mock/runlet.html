@@ -1,0 +1,1035 @@
+<title>RunLet</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* Layout: mock switcher on top; one desktop "stage" showing menu bar popover, full window, or agent hand-off. */
+:root{
+  --bg:#EEF1F5; --surface:#FFFFFF; --surface2:#F6F8FB; --line:#DDE2EA; --ink:#14181F; --mute:#667085;
+  --accent:#FF5B2E; --accent-ink:#FFFFFF; --accent-soft:#FFE9E2; --ok:#12A37A; --ok-soft:#DFF5EC;
+  --code-bg:#FBFCFD; --k:#C2410C; --s:#0E7C66; --c:#8A94A6; --n:#2F5BD8; --shadow:0 18px 50px rgba(20,24,31,.16);
+  --wall1:#DCE6F5; --wall2:#F3E3DA;
+  --f-display:"Bricolage Grotesque",system-ui,sans-serif; --f-body:"Instrument Sans",system-ui,sans-serif; --f-mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0E1116; --surface:#171B22; --surface2:#1D222B; --line:#2B323E; --ink:#EDF0F5; --mute:#9AA4B5;
+  --accent:#FF6B42; --accent-soft:#3A2018; --ok:#34D3A0; --ok-soft:#12302A;
+  --code-bg:#12161C; --k:#FF9A6B; --s:#5FD4B5; --c:#6D7788; --n:#7FA2FF; --shadow:0 18px 50px rgba(0,0,0,.5);
+  --wall1:#1B2536; --wall2:#2A1F22; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0E1116; --surface:#171B22; --surface2:#1D222B; --line:#2B323E; --ink:#EDF0F5; --mute:#9AA4B5;
+  --accent:#FF6B42; --accent-soft:#3A2018; --ok:#34D3A0; --ok-soft:#12302A;
+  --code-bg:#12161C; --k:#FF9A6B; --s:#5FD4B5; --c:#6D7788; --n:#7FA2FF; --shadow:0 18px 50px rgba(0,0,0,.5);
+  --wall1:#1B2536; --wall2:#2A1F22; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:14px;line-height:1.45;padding-inline:16px;padding-block:20px 40px}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.wrap{max-width:1180px;margin:0 auto;display:grid;gap:18px}
+header.top{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:14px}
+.brand{display:flex;align-items:center;gap:12px;min-width:0}
+.brand h1{font:700 26px/1 var(--f-display);margin:0;letter-spacing:-.02em}
+.brand p{margin:2px 0 0;color:var(--mute)}
+.seg{display:inline-flex;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:3px;gap:2px;flex-wrap:wrap}
+.seg button{border:0;background:none;padding:7px 13px;border-radius:9px;font-weight:600;color:var(--mute)}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+.note{color:var(--mute);font-size:13px;margin:0}
+
+/* desktop stage */
+.stage{position:relative;border:1px solid var(--line);border-radius:18px;overflow:hidden;min-height:640px;
+  background:radial-gradient(900px 500px at 15% 0%,var(--wall1),transparent 70%),radial-gradient(800px 500px at 100% 100%,var(--wall2),transparent 70%),var(--surface2)}
+.menubar{display:flex;align-items:center;justify-content:space-between;gap:12px;height:30px;padding:0 14px;background:color-mix(in srgb,var(--surface) 70%,transparent);backdrop-filter:blur(14px);border-bottom:1px solid var(--line);font-size:12.5px;font-weight:500}
+.menubar .l,.menubar .r{display:flex;align-items:center;gap:14px}
+.menubar .r span{color:var(--mute)}
+.mb-icon{border:0;background:none;padding:2px 6px;border-radius:6px;display:flex}
+.mb-icon[aria-pressed="true"]{background:var(--accent-soft)}
+.view{display:none;padding:18px}
+.view.on{display:block}
+
+/* popover */
+.pop-area{position:relative;min-height:590px}
+.popover{position:absolute;right:20px;top:2px;width:min(380px,100%);background:var(--surface);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);overflow:hidden}
+.popover::before{content:"";position:absolute;right:30px;top:-6px;width:12px;height:12px;background:var(--surface);border-left:1px solid var(--line);border-top:1px solid var(--line);transform:rotate(45deg)}
+.pop-head{display:flex;gap:8px;align-items:center;padding:12px;border-bottom:1px solid var(--line)}
+.pop-head input{flex:1;min-width:0;border:1px solid var(--line);background:var(--surface2);color:var(--ink);border-radius:9px;padding:8px 10px;font:inherit}
+.lang-row{display:flex;gap:6px;flex-wrap:wrap;padding:10px 12px 0}
+.chip{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:4px 10px;font-size:12px;font-weight:600;display:inline-flex;gap:6px;align-items:center}
+.chip i{width:8px;height:8px;border-radius:50%;display:block}
+.chip[aria-pressed="true"]{border-color:var(--ink);background:var(--ink);color:var(--bg)}
+.mini-editor{margin:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--code-bg);overflow:hidden}
+.mini-editor pre{margin:0;padding:10px 12px;font:400 12.5px/1.6 var(--f-mono);overflow-x:auto;max-height:150px}
+.mini-out{border-top:1px solid var(--line);padding:8px 12px;font:400 12.5px/1.5 var(--f-mono);display:flex;gap:8px;align-items:center}
+.mini-out b{color:var(--ok);font-weight:500}
+.pop-sec{padding:6px 12px 12px}
+.pop-sec h4{margin:8px 0 6px;font:600 11px/1 var(--f-body);letter-spacing:.08em;text-transform:uppercase;color:var(--mute)}
+.recent{display:grid;gap:2px}
+.recent button{display:flex;gap:10px;align-items:center;border:0;background:none;text-align:left;padding:7px 8px;border-radius:9px}
+.recent button:hover{background:var(--surface2)}
+.recent .t{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:500}
+.recent .m{color:var(--mute);font-size:12px}
+.badge-agent{font-size:10.5px;font-weight:600;background:var(--accent-soft);color:var(--accent);padding:2px 7px;border-radius:999px}
+.pop-foot{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px 12px;border-top:1px solid var(--line);background:var(--surface2);color:var(--mute);font-size:12px}
+kbd{font:500 11px var(--f-mono);border:1px solid var(--line);border-bottom-width:2px;border-radius:5px;padding:1px 5px;background:var(--surface);color:var(--ink)}
+.callouts{position:absolute;left:0;top:10px;max-width:min(360px,100%);display:grid;gap:10px}
+.callout{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.callout b{font:700 15px var(--f-display);display:block;margin-bottom:2px}
+.callout span{color:var(--mute)}
+@media (max-width:860px){.callouts{position:static;margin-bottom:14px;max-width:none}.popover{position:relative;right:auto;margin-inline:auto}.popover::before{display:none}.pop-area{min-height:0}}
+
+/* buttons */
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:9px;padding:7px 12px;font-weight:600;display:inline-flex;gap:7px;align-items:center}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.primary:hover{filter:brightness(1.06)}
+.btn.sm{padding:5px 10px;font-size:12.5px}
+
+/* app window */
+.window{background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+.titlebar{display:flex;align-items:center;gap:12px;padding:10px 14px;border-bottom:1px solid var(--line);background:var(--surface2)}
+.lights{display:flex;gap:7px}.lights i{width:12px;height:12px;border-radius:50%;background:#FF5F57}.lights i:nth-child(2){background:#FEBC2E}.lights i:nth-child(3){background:#28C840}
+.titlebar .name{font-weight:600;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.live{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--ok);background:var(--ok-soft);padding:3px 9px;border-radius:999px}
+.live::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--ok);animation:pulse 1.6s infinite}
+@keyframes pulse{50%{opacity:.35}}
+@media (prefers-reduced-motion:reduce){.live::before{animation:none}*{transition:none!important}}
+.app{display:grid;grid-template-columns:200px minmax(0,1fr) minmax(0,1fr);min-height:520px}
+.app.with-agent{grid-template-columns:200px minmax(0,1fr) minmax(0,1fr) 270px}
+.side{border-right:1px solid var(--line);background:var(--surface2);padding:12px 10px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.side h4{margin:0 0 4px 6px;font:600 11px/1 var(--f-body);letter-spacing:.08em;text-transform:uppercase;color:var(--mute)}
+.side button.item{width:100%;display:flex;gap:9px;align-items:center;border:0;background:none;text-align:left;padding:6px 8px;border-radius:8px;min-width:0}
+.side button.item span.t{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.side button.item[aria-current="true"]{background:var(--surface);box-shadow:0 0 0 1px var(--line)}
+.dot{width:8px;height:8px;border-radius:50%;flex:none}
+.pane{display:flex;flex-direction:column;min-width:0}
+.pane + .pane{border-left:1px solid var(--line)}
+.bar{display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.bar .sp{flex:1}
+.code{margin:0;flex:1;padding:12px 0;background:var(--code-bg);font:400 13px/1.7 var(--f-mono);overflow:auto;counter-reset:l}
+.code div{display:block;padding:0 14px 0 8px;white-space:pre;counter-increment:l;min-height:1.7em}
+.code div::before{content:counter(l);display:inline-block;width:26px;margin-right:12px;text-align:right;color:var(--c);opacity:.7}
+.code div.hl{background:var(--accent-soft);box-shadow:inset 3px 0 0 var(--accent)}
+.k{color:var(--k)}.s{color:var(--s)}.c{color:var(--c);font-style:italic}.n{color:var(--n)}
+.tabs{display:flex;gap:2px}
+.tabs button{border:0;background:none;padding:5px 10px;border-radius:7px;font-weight:600;color:var(--mute)}
+.tabs button[aria-selected="true"]{background:var(--surface2);color:var(--ink)}
+.out{flex:1;padding:14px;overflow:auto;min-height:0}
+.console{font:400 13px/1.6 var(--f-mono);white-space:pre-wrap;margin:0}
+.console .ok{color:var(--ok)}.console .dim{color:var(--mute)}
+.graph{width:100%;height:auto;max-height:300px;display:block}
+.graph text{font:600 13px var(--f-body);fill:var(--ink)}
+.graph .w{font:500 11px var(--f-mono);fill:var(--mute)}
+.graph .edge{stroke:var(--line);stroke-width:2.5;fill:none}
+.graph .edge.hit{stroke:var(--accent);stroke-width:4}
+.graph .node{fill:var(--surface);stroke:var(--line);stroke-width:2}
+.graph .node.hit{fill:var(--accent);stroke:var(--accent)}
+.graph .node.hit + text{fill:var(--accent-ink)}
+.result{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+.stat{background:var(--surface2);border:1px solid var(--line);border-radius:10px;padding:8px 12px}
+.stat small{display:block;color:var(--mute);font-size:11px;letter-spacing:.06em;text-transform:uppercase}
+.stat b{font:700 20px var(--f-display);font-variant-numeric:tabular-nums}
+.deps{border-top:1px solid var(--line);padding:8px 12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;background:var(--surface2)}
+.deps .lbl{font-weight:600;font-size:12px;color:var(--mute);letter-spacing:.06em;text-transform:uppercase}
+.dep{font:500 12px var(--f-mono);background:var(--surface);border:1px solid var(--line);border-radius:7px;padding:3px 8px;display:inline-flex;gap:6px;align-items:center}
+.dep em{font-style:normal;color:var(--ok)}
+.dep.new{border-color:var(--accent);color:var(--accent)}
+
+/* agent panel */
+.agent{border-left:1px solid var(--line);display:none;flex-direction:column;min-width:0;background:var(--surface)}
+.app.with-agent .agent{display:flex}
+.agent .log{flex:1;padding:12px;display:flex;flex-direction:column;gap:10px;overflow:auto}
+.msg{border-radius:12px;padding:9px 11px;max-width:100%}
+.msg.you{background:var(--ink);color:var(--bg);align-self:flex-end}
+.msg.ai{background:var(--surface2);border:1px solid var(--line)}
+.msg .who{display:block;font-size:11px;font-weight:600;color:var(--mute);margin-bottom:2px}
+.msg.you .who{color:inherit;opacity:.7}
+.agent form{display:flex;gap:6px;padding:10px;border-top:1px solid var(--line)}
+.agent input{flex:1;min-width:0;border:1px solid var(--line);background:var(--surface2);color:var(--ink);border-radius:9px;padding:8px 10px;font:inherit}
+.suggest{display:flex;gap:6px;flex-wrap:wrap;padding:0 10px 10px}
+
+@media (max-width:1000px){
+  .app,.app.with-agent{grid-template-columns:minmax(0,1fr)}
+  .side{border-right:0;border-bottom:1px solid var(--line);flex-direction:row;flex-wrap:wrap}
+  .pane + .pane{border-left:0;border-top:1px solid var(--line)}
+  .agent{border-left:0;border-top:1px solid var(--line);min-height:320px}
+  .out{min-height:280px}.code{min-height:260px}
+}
+
+/* agent hand-off */
+.flow{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px;align-items:start}
+@media (max-width:860px){.flow{grid-template-columns:minmax(0,1fr)}}
+.term{background:#14181F;color:#E7EAF0;border-radius:14px;padding:14px;font:400 13px/1.6 var(--f-mono);box-shadow:var(--shadow)}
+.term .p{color:#8A94A6}.term .tool{color:#7FD6B8}
+.term a{color:#FF9A6B;text-decoration:underline;cursor:pointer}
+.link-card{display:flex;gap:12px;align-items:center;margin-top:10px;background:#1F2530;border:1px solid #333B49;border-radius:12px;padding:10px 12px;color:#EDF0F5;width:100%;text-align:left}
+.link-card:hover{border-color:#FF6B42}
+.link-card b{display:block;font:700 14px var(--f-display)}
+.link-card span{color:#9AA4B5;font-size:12px;word-break:break-all}
+.notif{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:12px;display:flex;gap:12px;align-items:center;box-shadow:var(--shadow);margin-bottom:14px}
+.steps{display:grid;gap:10px;margin:0;padding:0;list-style:none;counter-reset:s}
+.steps li{counter-increment:s;display:grid;grid-template-columns:28px 1fr;gap:10px}
+.steps li::before{content:counter(s);width:28px;height:28px;border-radius:50%;background:var(--accent-soft);color:var(--accent);font:700 13px/28px var(--f-display);text-align:center}
+.steps b{display:block}.steps span{color:var(--mute)}
+.mcp{margin-top:14px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.mcp h3{margin:0 0 6px;font:700 15px var(--f-display)}
+.mcp code{font:500 12.5px var(--f-mono);background:var(--surface2);border:1px solid var(--line);border-radius:6px;padding:1px 6px;display:inline-block;margin:2px 2px 2px 0}
+.titlebar{flex-wrap:wrap}
+.needbar{display:grid;gap:8px;padding:10px 12px;background:var(--accent-soft);border-bottom:1px solid var(--accent)}
+.needbar[hidden]{display:none}
+.nb-h{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+.nb-r{display:flex;gap:8px;align-items:center;flex-wrap:wrap;background:var(--surface);border:1px solid var(--line);border-radius:9px;padding:6px 9px}
+.nb-r code{font:500 12.5px var(--f-mono)}
+.envp{top:auto;bottom:52px;left:212px;right:auto}
+@media (max-width:1000px){.envp{left:12px}}
+.hist{display:grid;gap:6px;max-height:300px;overflow:auto}
+.hrow{border:1px solid var(--line);border-radius:10px;padding:8px 10px;display:grid;gap:4px;font-size:12.5px}
+.hrow.cur{border-color:var(--ink)}
+.hrow .top{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.hrow .top span.t{color:var(--mute);margin-left:auto;font-size:11.5px}
+.hrow pre{margin:0;font:400 11.5px/1.5 var(--f-mono);overflow-x:auto}
+.hrow .m{color:#C2410C}.hrow .p{color:var(--ok)}
+.hrow button{justify-self:start}
+.envrow{display:flex;gap:8px;align-items:center;border:1px solid var(--line);border-radius:9px;padding:5px 8px;font:500 12px var(--f-mono);margin-bottom:5px}
+.envrow em{font-style:normal;color:var(--ok);margin-left:auto}
+.envrow button{border:0;background:none;color:var(--mute);padding:0 2px}
+.inputs{margin-top:14px;border-top:1px solid var(--line);padding-top:10px}
+.inputs h4{margin:0;font:600 11px/1 var(--f-body);letter-spacing:.08em;text-transform:uppercase;color:var(--mute)}
+.detect{margin:8px 12px 0;font-size:12px;color:var(--ok);font-weight:600}
+.allowrow{display:flex;gap:6px;margin-top:6px}
+.agents-body{padding:18px;display:grid;gap:16px}
+.arch{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:12px;align-items:center}
+@media (max-width:700px){.arch{grid-template-columns:minmax(0,1fr)}}
+.arch-col{border:1px solid var(--line);background:var(--surface2);border-radius:12px;padding:12px;display:flex;flex-wrap:wrap;gap:6px;align-content:start}
+.arch-col b{flex-basis:100%;font:700 14px var(--f-display)}
+.arch-col span{font-size:12px;font-weight:600;background:var(--surface);border:1px solid var(--line);border-radius:7px;padding:3px 8px}
+.arch-col.strong{border-color:var(--accent);background:var(--accent-soft)}
+.arch-mid{display:grid;gap:8px}
+.pill{font-size:12px;font-weight:600;text-align:center;border:1px dashed var(--mute);border-radius:10px;padding:6px 12px;background:var(--surface)}
+.pill small{color:var(--mute);font-weight:500}
+.agent-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
+.acard{border:1px solid var(--line);border-radius:14px;padding:14px;display:grid;gap:10px;background:var(--surface);min-width:0;align-content:start}
+.acard header{display:flex;gap:10px;align-items:center;min-width:0}
+.acard header i{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;color:#fff;font:700 15px var(--f-display);font-style:normal;flex:none}
+.acard h3{margin:0;font:700 15px var(--f-display)}
+.acard .sub{color:var(--mute);font-size:12px}
+.acard code{font:500 11.5px var(--f-mono);background:var(--surface2);border:1px solid var(--line);border-radius:8px;padding:6px 8px;display:block;overflow-x:auto;white-space:nowrap}
+.status{font-size:11.5px;font-weight:600;padding:2px 9px;border-radius:999px;margin-left:auto;white-space:nowrap}
+.status.on{background:var(--ok-soft);color:var(--ok)}
+.status.found{background:var(--accent-soft);color:var(--accent)}
+.status.off{background:var(--surface2);color:var(--mute)}
+.acard .perms{display:grid;gap:5px;font-size:12.5px}
+.acard .perms label{display:flex;gap:8px;align-items:center}
+.acard .row{display:flex;gap:6px;flex-wrap:wrap}
+.cap-head{display:flex;flex-wrap:wrap;gap:12px;justify-content:space-between;align-items:flex-end;margin-bottom:14px}
+.cap-head h2{margin:0 0 2px;font:700 22px/1.15 var(--f-display);letter-spacing:-.02em;text-wrap:balance}
+.cap{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;align-items:start}
+@media (max-width:980px){.cap{grid-template-columns:minmax(0,1fr)}}
+.cap-col{display:grid;gap:10px;min-width:0;align-content:start}
+.cap-label{display:flex;gap:8px;align-items:center;font-weight:600}
+.cap-label b{width:22px;height:22px;border-radius:50%;background:var(--ink);color:var(--bg);font:700 12px/22px var(--f-display);text-align:center}
+.paper{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px;font:400 14px/1.6 Georgia,"Times New Roman",serif;box-shadow:0 2px 0 var(--line)}
+.paper h5{margin:0 0 6px;font:600 11px var(--f-body);letter-spacing:.08em;text-transform:uppercase;color:var(--mute)}
+.paper p{margin:0 0 10px}
+.paper .sel{position:relative;outline:2px dashed var(--accent);outline-offset:4px;background:var(--accent-soft);border-radius:3px;padding:2px 4px;margin-inline:-4px}
+.paper .sel::after{content:"";position:absolute;right:-8px;bottom:-8px;width:10px;height:10px;background:var(--accent);border-radius:2px}
+.paper .sel.done{outline-style:solid;background:transparent}
+.capcard,.capres{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px;min-width:0}
+.capcard.empty,.capres.empty{border-style:dashed;color:var(--mute);background:var(--surface2);min-height:120px;display:grid;place-items:center;text-align:center}
+.capcard .thumb{border:1px solid var(--line);background:var(--code-bg);border-radius:10px;padding:10px 12px;font:400 13px/1.55 Georgia,serif;margin-bottom:10px;overflow-wrap:anywhere}
+.capcard .chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.tag{font-size:11.5px;font-weight:600;padding:3px 9px;border-radius:999px;background:var(--ok-soft);color:var(--ok)}
+.tag.a{background:var(--accent-soft);color:var(--accent)}
+.capcard textarea{width:100%;min-height:52px;resize:vertical;border:1px solid var(--line);background:var(--surface2);color:var(--ink);border-radius:9px;padding:8px 10px;font:inherit;margin-bottom:8px}
+.agentlog{display:grid;gap:6px;font-size:13px}
+.agentlog div{display:grid;grid-template-columns:18px 1fr;gap:6px;padding:7px 10px;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+.agentlog div i{font-style:normal;color:var(--ok);font-weight:700}
+.agentlog code,.capres code{font:500 12px var(--f-mono);color:var(--mute)}
+.capres .plot{width:100%;height:auto;display:block;background:var(--code-bg);border:1px solid var(--line);border-radius:10px}
+.plot text{font:500 10px var(--f-mono);fill:var(--mute)}
+.plot .grid{stroke:var(--line);stroke-width:1}
+.plot .axis{stroke:var(--mute);stroke-width:1.2}
+.plot .curve{fill:none;stroke:var(--accent);stroke-width:3;stroke-linecap:round}
+.plot .area{fill:var(--accent);opacity:.2}
+.plot .pt{fill:var(--accent);stroke:var(--surface);stroke-width:2}
+.sliders{display:grid;gap:8px;margin:12px 0 4px}
+.sliders label{display:grid;grid-template-columns:90px minmax(0,1fr) 62px;gap:8px;align-items:center;font-size:12.5px;font-weight:600}
+.sliders output{font:500 12.5px var(--f-mono);text-align:right}
+.sliders input[type=range]{accent-color:var(--accent);width:100%}
+.capres .eq{font:500 12px var(--f-mono);color:var(--mute);margin-top:8px}
+.window{position:relative}
+.more{position:relative;display:inline-flex}
+.morebtn{border:0;background:none;padding:5px 10px;border-radius:7px;font-weight:600;color:var(--mute)}
+.morebtn:hover{background:var(--surface2)}
+.menu{position:absolute;left:0;top:calc(100% + 6px);z-index:6;min-width:190px;background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);padding:5px;display:grid;gap:1px}
+.menu[hidden]{display:none}
+.menu button{display:flex;gap:9px;align-items:center;border:0;background:none;text-align:left;padding:7px 9px;border-radius:8px;font-weight:500;color:var(--ink)}
+.menu button:hover{background:var(--surface2)}
+.menu .soon{padding:6px 9px 4px;font-size:11.5px;color:var(--mute);border-top:1px solid var(--line);margin-top:4px}
+.lang-row{position:relative}
+.share{position:absolute;right:12px;top:50px;z-index:5;width:min(340px,calc(100% - 24px));background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:14px;display:grid;gap:12px}
+.share h3{margin:0;font:700 16px var(--f-display)}
+.share-card{border:1px solid var(--line);border-radius:12px;background:var(--code-bg);overflow:hidden}
+.share-card pre{margin:0;padding:10px 12px;font:400 12px/1.55 var(--f-mono);overflow:hidden;max-height:92px;color:var(--ink)}
+.share-card div{display:flex;justify-content:space-between;gap:8px;align-items:center;padding:7px 12px;border-top:1px solid var(--line);background:var(--surface2);font-size:12px;color:var(--mute)}
+.linkrow{display:flex;gap:6px}
+.linkrow input{flex:1;min-width:0;border:1px solid var(--line);background:var(--surface2);color:var(--ink);border-radius:9px;padding:7px 10px;font:500 12px var(--f-mono)}
+.nets{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.nets button{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:8px 2px;font-size:11.5px;font-weight:600;display:grid;gap:4px;justify-items:center}
+.nets button:hover{border-color:var(--ink)}
+.nets i{width:26px;height:26px;border-radius:8px;display:grid;place-items:center;font:700 12px var(--f-display);font-style:normal;color:#fff}
+.opts{display:grid;gap:6px;font-size:12.5px}
+.opts label{display:flex;gap:8px;align-items:center}
+.toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:9px 16px;border-radius:10px;font-weight:600;opacity:0;pointer-events:none;transition:opacity .2s;z-index:9}
+.toast.on{opacity:1}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <svg id="logo" width="52" height="52" viewBox="0 0 64 64" aria-hidden="true">
+        <defs>
+          <linearGradient id="g1" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FF8A4C"/><stop offset="1" stop-color="#FF3D2E"/></linearGradient>
+          <linearGradient id="g2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".35"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
+        </defs>
+        <rect x="2" y="2" width="60" height="60" rx="15" fill="url(#g1)"/>
+        <rect x="2" y="2" width="60" height="30" rx="15" fill="url(#g2)"/>
+        <path d="M19 21 L33 32 L19 43" fill="none" stroke="#fff" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+        <rect x="37" y="40" width="12" height="5.5" rx="2.75" fill="#fff"/>
+        <circle cx="48" cy="19" r="3.6" fill="#fff" opacity=".9"/>
+      </svg>
+      <div><h1>RunLet</h1><p>A pocket playground for code. Mock for approval.</p></div>
+    </div>
+    <div class="seg" role="group" aria-label="Mock view">
+      <button data-view="menu" aria-pressed="true">Menu bar</button>
+      <button data-view="app" aria-pressed="false">Full app</button>
+      <button data-view="cap" aria-pressed="false">Capture</button>
+      <button data-view="agents" aria-pressed="false">Agents</button>
+      <button data-view="agent" aria-pressed="false">Agent hand-off</button>
+    </div>
+  </header>
+
+  <div class="stage">
+    <div class="menubar">
+      <div class="l"><b></b><b>RunLet</b><span style="color:var(--mute)">File</span><span style="color:var(--mute)">Snippet</span><span style="color:var(--mute)">Window</span></div>
+      <div class="r">
+        <button class="mb-icon" id="mbIcon" aria-label="RunLet menu bar icon" aria-pressed="true">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 7l6 5-6 5"/><path d="M14 17h5"/></svg>
+        </button>
+        <span>Wi-Fi</span><span>Thu 15 Oct 14:07</span>
+      </div>
+    </div>
+
+    <!-- 1. Menu bar launchpad -->
+    <section class="view on" id="v-menu">
+      <div class="pop-area">
+        <div class="callouts">
+          <div class="callout"><b>One click from anywhere</b><span>Open the menu bar icon, type, hit <kbd>⌘</kbd><kbd>↵</kbd>. Output appears below the snippet.</span></div>
+          <div class="callout"><b>Agent runs show up here</b><span>Snippets an agent made are tagged, so you can reopen and keep editing them.</span></div>
+          <div class="callout"><b>Share in one step</b><span>Full app → Share sends a link and preview card to X, LinkedIn, Reddit, Hacker News, Bluesky, Mastodon, WhatsApp or Discord.</span></div>
+          <div class="callout"><b>Pop out when it grows</b><span>Use "Open in window" to continue in the full app with the same code and dependencies.</span></div>
+        </div>
+        <div class="popover" role="dialog" aria-label="RunLet quick run">
+          <div class="pop-head">
+            <input id="popSearch" aria-label="Search snippets or paste code" placeholder="Paste code or search snippets…">
+            <button class="btn sm" id="popCap" title="Capture a problem (⌃⌥C)">⌖ Capture</button>
+            <button class="btn primary sm" id="popRun">▶ Run</button>
+          </div>
+          <div class="lang-row" id="popLangs"></div>
+          <div class="detect" id="popDetect">✓ Language detected from clipboard: Python · runtime warm</div>
+          <div class="mini-editor">
+            <pre id="popCode"></pre>
+            <div class="mini-out"><b>✓</b><span id="popOut">Ran in 38 ms</span></div>
+          </div>
+          <div class="pop-sec">
+            <h4>Recent</h4>
+            <div class="recent">
+              <button data-open="1"><i class="dot" style="background:#3776AB"></i><span class="t">Shortest path (Dijkstra)</span><span class="badge-agent">Agent</span></button>
+              <button data-open="1"><i class="dot" style="background:#F0C814"></i><span class="t">Debounce vs throttle</span><span class="m">2h ago</span></button>
+              <button data-open="1"><i class="dot" style="background:#3178C6"></i><span class="t">Zod schema check</span><span class="m">Yesterday</span></button>
+              <button data-open="1"><i class="dot" style="background:#00ADD8"></i><span class="t">Worker pool in Go</span><span class="m">Mon</span></button>
+            </div>
+          </div>
+          <div class="pop-foot"><span>Ready in 120 ms · 2 agents connected</span><button class="btn sm" id="popOpen">Open in window ↗</button></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. Full app -->
+    <section class="view" id="v-app">
+      <div class="window">
+        <div class="titlebar">
+          <div class="lights"><i></i><i></i><i></i></div>
+          <div class="name" id="winName">Shortest path (Dijkstra)</div>
+          <span class="live" id="liveTag">Live</span>
+          <button class="btn sm" id="agentToggle" aria-pressed="false">✦ Agent</button>
+          <button class="btn sm" id="histBtn" aria-expanded="false" aria-controls="histPanel">⟲ History</button>
+          <button class="btn sm" id="sbBtn" aria-expanded="false" aria-controls="sbPanel"><span id="sbDot" style="color:var(--ok)">●</span> <span id="sbTxt">Sandboxed</span></button>
+          <button class="btn primary sm" id="shareBtn" aria-expanded="false" aria-controls="sharePanel">Share ↗</button>
+        </div>
+        <div class="share" id="histPanel" hidden>
+          <h3>Version history</h3>
+          <div class="hist" id="histList"></div>
+          <div class="note">Every run and every agent edit is saved. Restore any version, or fork it into a new snippet.</div>
+        </div>
+        <div class="share" id="sbPanel" hidden>
+          <h3>Sandbox</h3>
+          <div class="note" style="margin:0">This snippet runs in an isolated space. Agent edits that need more ask you first.</div>
+          <div class="opts">
+            <label><input type="checkbox" id="sbNet"> Network access</label>
+            <label><input type="checkbox" id="sbFiles"> Read files in ~/Documents/RunLet</label>
+            <label><input type="checkbox" checked disabled> Time limit 10 s · memory 512 MB</label>
+          </div>
+        </div>
+        <div class="share envp" id="envPanel" hidden>
+          <h3>Environment</h3>
+          <div class="opts">
+            <label for="rtVer">Runtime <select id="rtVer" style="border:1px solid var(--line);background:var(--surface2);color:var(--ink);border-radius:8px;padding:4px 6px;font:inherit"></select></label>
+            <label><input type="checkbox" checked> Fresh isolated environment for this snippet</label>
+          </div>
+          <div id="envList"></div>
+          <div class="linkrow"><input id="envAdd" placeholder="Add a package, e.g. numpy" aria-label="Package name"><button class="btn primary sm" id="envInstall">Install</button></div>
+          <div class="note" id="envNote">Runtimes and packages are downloaded once and cached. No setup needed.</div>
+        </div>
+        <div class="share" id="sharePanel" hidden>
+          <h3>Share this snippet</h3>
+          <div class="share-card">
+            <pre id="shareCode"></pre>
+            <div><span id="shareMeta">Python · 19 lines</span><span>runlet.app/s/8f3a</span></div>
+          </div>
+          <div class="linkrow"><input id="shareLink" readonly aria-label="Share link" value="https://runlet.app/s/8f3a-dijkstra"><button class="btn sm" id="copyLink">Copy</button></div>
+          <div class="nets" id="nets">
+            <button data-n="X"><i style="background:#111">X</i>X</button>
+            <button data-n="LinkedIn"><i style="background:#0A66C2">in</i>LinkedIn</button>
+            <button data-n="Reddit"><i style="background:#FF4500">r/</i>Reddit</button>
+            <button data-n="Hacker News"><i style="background:#FF6600">Y</i>HN</button>
+            <button data-n="Bluesky"><i style="background:#1185FE">B</i>Bluesky</button>
+            <button data-n="Mastodon"><i style="background:#6364FF">M</i>Mastodon</button>
+            <button data-n="WhatsApp"><i style="background:#25D366">W</i>WhatsApp</button>
+            <button data-n="Discord"><i style="background:#5865F2">D</i>Discord</button>
+          </div>
+          <div class="opts">
+            <label><input type="checkbox" id="optOut" checked> Include output and preview image</label>
+            <label><input type="checkbox" id="optLive"> Let people run it in the browser</label>
+            <label><input type="checkbox" id="optGist"> Also create a GitHub Gist</label>
+          </div>
+          <button class="btn sm" id="copyImg">Copy as image card</button>
+        </div>
+        <div class="app" id="appGrid">
+          <aside class="side">
+            <div>
+              <h4>Snippets</h4>
+              <button class="item" data-demo="0" aria-current="true"><i class="dot" style="background:#3776AB"></i><span class="t">Shortest path</span></button>
+              <button class="item" data-demo="1" aria-current="false"><i class="dot" style="background:#3776AB"></i><span class="t">Matrix eigenvalues</span></button>
+              <button class="item"><i class="dot" style="background:#F0C814"></i><span class="t">Debounce vs throttle</span></button>
+              <button class="item"><i class="dot" style="background:#3178C6"></i><span class="t">Zod schema check</span></button>
+              <button class="item"><i class="dot" style="background:#00ADD8"></i><span class="t">Worker pool</span></button>
+              <button class="item"><i class="dot" style="background:#DEA584"></i><span class="t">Ownership demo</span></button>
+            </div>
+            <div>
+              <h4>Collections</h4>
+              <button class="item"><span class="t">Algorithms</span></button>
+              <button class="item"><span class="t">Interview prep</span></button>
+              <button class="item"><span class="t">From agents</span></button>
+            </div>
+          </aside>
+
+          <div class="pane">
+            <div class="bar">
+              <div class="tabs" id="langTabs" role="tablist" aria-label="Language"></div>
+              <span class="sp"></span>
+              <button class="btn primary sm" id="runBtn">▶ Run <kbd style="color:var(--ink)">⌘↵</kbd></button>
+            </div>
+            <div class="needbar" id="needBar" hidden></div>
+            <div class="code" id="code" tabindex="0" aria-label="Code editor (mock)"></div>
+            <div class="deps">
+              <button class="btn sm" id="envBtn" aria-expanded="false" aria-controls="envPanel"><span id="envLbl">Python 3.13</span> · isolated ▾</button>
+              <span class="lbl">Packages</span>
+              <span id="depList" style="display:contents"></span>
+              <button class="btn sm" id="addDep">+ Add</button>
+            </div>
+          </div>
+
+          <div class="pane">
+            <div class="bar">
+              <div class="tabs" role="tablist" id="outTabs">
+                <button role="tab" aria-selected="true" data-t="prev">Preview</button>
+                <button role="tab" aria-selected="false" data-t="con">Console</button>
+              </div>
+              <span class="sp"></span>
+              <span class="live" id="liveTag2">Updates as you type</span>
+            </div>
+            <div class="out" id="outPrev">
+              <svg class="graph" viewBox="0 0 440 280" role="img" aria-label="Weighted graph with shortest path from A to D highlighted" id="graph"></svg>
+              <div class="result">
+                <div class="stat"><small>Path</small><b id="rPath">A → C → D</b></div>
+                <div class="stat"><small>Cost</small><b id="rCost">7</b></div>
+                <div class="stat"><small>Time</small><b id="rTime">0.4 ms</b></div>
+              </div>
+              <div class="inputs">
+                <h4>Inputs found in your code</h4>
+                <div class="sliders"><label for="inW">B → D cost <input id="inW" type="range" min="1" max="12" value="7"><output id="inWO">7</output></label></div>
+                <span class="note">Line 6. Drag to change the number in your code and re-run.</span>
+              </div>
+            </div>
+            <div class="out" id="outCon" hidden><pre class="console" id="conText"></pre></div>
+          </div>
+
+          <aside class="agent" aria-label="Agent chat">
+            <div class="bar"><b>Agent</b><span class="sp"></span><span class="badge-agent">via MCP</span></div>
+            <div class="log" id="log">
+              <div class="msg ai"><span class="who">Claude</span>I built a Dijkstra demo and opened it here. Change any weight, or ask me to.</div>
+            </div>
+            <div class="suggest">
+              <button class="chip" data-ask="Make the B → D road cost 1">B → D costs 1</button>
+              <button class="chip" data-ask="Add a step-by-step trace">Show trace</button>
+              <button class="chip" data-ask="Fetch real road distances">Needs network</button>
+            </div>
+            <form id="askForm"><input id="askInput" aria-label="Ask the agent" placeholder="Ask for a change…"><button class="btn primary sm">Send</button></form>
+          </aside>
+        </div>
+      </div>
+    </section>
+
+    <!-- Agents -->
+    <section class="view" id="v-agents">
+      <div class="window">
+        <div class="titlebar"><div class="lights"><i></i><i></i><i></i></div><div class="name">Settings · Agents</div></div>
+        <div class="agents-body">
+          <div class="cap-head" style="margin-bottom:0">
+            <div>
+              <h2>Bring your own agent</h2>
+              <p class="note">RunLet doesn't ship a model. It connects to the agents you already use and gives them a sandbox to run code in.</p>
+            </div>
+          </div>
+          <div class="arch" aria-label="How agents connect">
+            <div class="arch-col"><b>Your agents</b><span>Claude Code</span><span>Codex</span><span>Gemini CLI</span><span>Any ACP agent</span></div>
+            <div class="arch-mid"><span class="pill">Headless driver<br><small>Claude Code</small></span><span class="pill">ACP bridge<br><small>everything else</small></span></div>
+            <div class="arch-col strong"><b>RunLet</b><span>Sandboxed runner</span><span>Packages</span><span>Live preview</span><span>MCP tools</span></div>
+          </div>
+          <div class="agent-cards" id="agentCards"></div>
+          <div class="note">ChatGPT itself has no local agent protocol, so OpenAI is reached through Codex CLI, which speaks ACP through a bridge adapter. Anything that speaks ACP can be added with a command.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Capture -->
+    <section class="view" id="v-cap">
+      <div class="cap-head">
+        <div>
+          <h2>Capture a problem. Get a working picture.</h2>
+          <p class="note">Select a physics question, an integral, a puzzle or a block of code anywhere on your Mac. Your agent turns it into code and shows it live.</p>
+        </div>
+        <div class="seg" role="group" aria-label="Example problem">
+          <button data-ex="phys" aria-pressed="true">Physics</button>
+          <button data-ex="math" aria-pressed="false">Maths</button>
+          <button disabled title="Planned" style="opacity:.5;cursor:default">Logic</button>
+          <button disabled title="Planned" style="opacity:.5;cursor:default">Code</button>
+        </div>
+      </div>
+      <div class="cap">
+        <div class="cap-col">
+          <div class="cap-label"><b>1</b> Select</div>
+          <div class="paper" id="paper"></div>
+          <button class="btn primary" id="capBtn">⌖ Capture selection <kbd style="color:var(--ink)">⌃⌥C</kbd></button>
+        </div>
+        <div class="cap-col">
+          <div class="cap-label"><b>2</b> Capture card</div>
+          <div id="capCard" class="capcard empty">The captured text or image lands here with its type detected.</div>
+          <div class="agentlog" id="capLog" hidden></div>
+        </div>
+        <div class="cap-col">
+          <div class="cap-label"><b>3</b> Live result</div>
+          <div id="capResult" class="capres empty">Your agent's visual opens here through the magic link, with sliders you can drag.</div>
+        </div>
+      </div>
+      <p class="note" style="margin-top:12px">Capture works on selected text, a screenshot region, or an image dropped on the menu bar icon. Agents can also call <code style="font:500 12px var(--f-mono)">capture.list</code> and <code style="font:500 12px var(--f-mono)">capture.attach</code> over MCP.</p>
+    </section>
+
+    <!-- 3. Agent hand-off -->
+    <section class="view" id="v-agent">
+      <div class="flow">
+        <div>
+          <div class="term" aria-label="Agent terminal (mock)">
+<span class="p">you ›</span> Is Dijkstra still right if one road gets cheaper? Show me.
+<br><br><span class="p">claude ›</span> I'll prototype it in RunLet.
+<br><span class="tool">⏺ runlet.create_snippet</span>  python · deps: none
+<br><span class="tool">⏺ runlet.run</span>  ok · 38 ms
+<br><span class="tool">⏺ runlet.open</span>  rendered preview ready
+<button class="link-card" id="magic"><svg width="34" height="34" viewBox="0 0 64 64" aria-hidden="true"><rect x="2" y="2" width="60" height="60" rx="15" fill="#FF5B2E"/><path d="M19 21 L33 32 L19 43" fill="none" stroke="#fff" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></svg><div style="min-width:0"><b>Open "Shortest path" in RunLet</b><span>runlet://open/8f3a-dijkstra?live=1</span></div></button>
+          </div>
+          <div class="mcp">
+            <h3>What agents can call</h3>
+            <code>create_snippet</code><code>run</code><code>install_package</code><code>edit_lines</code><code>open</code><code>read_output</code><code>watch_changes</code>
+            <p class="note" style="margin-top:8px">Runs locally in a sandbox. Network and file access are off unless you allow them per snippet.</p>
+          </div>
+        </div>
+        <div>
+          <div class="notif">
+            <svg width="40" height="40" viewBox="0 0 64 64" aria-hidden="true"><rect x="2" y="2" width="60" height="60" rx="15" fill="#FF5B2E"/><path d="M19 21 L33 32 L19 43" fill="none" stroke="#fff" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <div style="min-width:0"><b>Claude wants to show you a result</b><div class="note">Shortest path · Python · opens in RunLet</div></div>
+          </div>
+          <ol class="steps">
+            <li><div><b>Agent works through MCP</b><span>It writes code, installs packages and runs it without leaving your editor or chat.</span></div></li>
+            <li><div><b>A magic link opens the result</b><span>RunLet launches or comes to the front, with the rendered output already showing.</span></div></li>
+            <li><div><b>You and the agent edit the same snippet</b><span>Type in the editor and the preview refreshes. Ask the agent and its edits are highlighted line by line.</span></div></li>
+            <li><div><b>Keep it or toss it</b><span>Pin to a collection, copy as a gist-ready file, or let it expire after a day.</span></div></li>
+          </ol>
+          <p class="note" style="margin-top:14px">Try it: click the link card on the left.</p>
+        </div>
+      </div>
+    </section>
+  </div>
+  <p class="note">Mock only. Output, graph and agent replies are scripted to show the intended flow. Languages planned: Python, JavaScript, TypeScript, Go, Rust, Ruby, Swift, SQL.</p>
+</div>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const esc=t=>t.replace(/&/g,'&amp;').replace(/</g,'&lt;');
+let wBD=7, trace=false, demo=false;
+const DEMO=`import numpy as np
+import quickplotz as qp
+
+a = np.array([[2, 1], [1, 3]])
+print(np.linalg.eigvals(a))
+qp.hist(a.flatten())`;
+const NEED=[
+  {pkg:'numpy',ver:'2.1.3',safe:1,note:'Popular · installs in about 2 s'},
+  {pkg:'quickplotz',ver:'0.3.1',safe:0,note:'Unverified · 212 downloads · published 3 days ago'}
+];
+
+const LANGS={
+  python:{name:'Python',color:'#3776AB',deps:[['heapq','stdlib']],kw:/\b(import|from|def|return|for|in|if|while|not|None|True|False|as)\b/g,cm:'#'},
+  javascript:{name:'JavaScript',color:'#F0C814',deps:[['lodash','4.17']],kw:/\b(const|let|function|return|for|of|if|while|new|import|from|null)\b/g,cm:'//'},
+  typescript:{name:'TypeScript',color:'#3178C6',deps:[['zod','3.23'],['tsx','4.19']],kw:/\b(const|let|function|return|for|of|if|while|new|import|from|type|null)\b/g,cm:'//'},
+  go:{name:'Go',color:'#00ADD8',deps:[['container/heap','stdlib']],kw:/\b(package|import|func|return|for|range|if|var|type|struct|nil)\b/g,cm:'//'},
+  rust:{name:'Rust',color:'#DEA584',deps:[['std','stdlib']],kw:/\b(use|fn|let|mut|return|for|in|if|while|struct|impl|pub)\b/g,cm:'//'}
+};
+function sample(l){
+  if(demo&&l==='python')return DEMO;
+  const w=wBD;
+  const m={
+python:`import heapq
+
+# Road map: node -> [(neighbour, cost)]
+graph = {
+    "A": [("B", 4), ("C", 2)],
+    "B": [("D", ${w})],
+    "C": [("B", 1), ("D", 5)],
+    "D": [],
+}
+
+def shortest(src, dst):
+    dist, prev = {src: 0}, {}
+    queue = [(0, src)]
+    while queue:
+        d, u = heapq.heappop(queue)
+        if u == dst: break
+        for v, w in graph[u]:
+            if d + w < dist.get(v, 1e9):
+                dist[v], prev[v] = d + w, u
+                heapq.heappush(queue, (d + w, v))
+    return dist[dst], prev`,
+javascript:`// Debounce waits for quiet. Throttle caps the rate.
+function debounce(fn, ms) {
+  let t;
+  return (...args) => {
+    clearTimeout(t);
+    t = setTimeout(() => fn(...args), ms);
+  };
+}
+const log = debounce(v => console.log("saved", v), 300);
+for (const v of ["a", "ab", "abc"]) log(v);`,
+typescript:`import { z } from "zod";
+
+const User = z.object({
+  id: z.number().int(),
+  email: z.string().email(),
+});
+
+type User = z.infer<typeof User>;
+console.log(User.safeParse({ id: 1, email: "ada@lovelace.dev" }));`,
+go:`package main
+
+import "fmt"
+
+// Fan out jobs to three workers.
+func main() {
+  jobs := make(chan int, 5)
+  for w := 1; w <= 3; w++ {
+    go func(id int) {
+      for j := range jobs { fmt.Println("worker", id, "job", j) }
+    }(w)
+  }
+}`,
+rust:`fn main() {
+    let s = String::from("hello");
+    let t = s;           // ownership moves to t
+    // println!("{s}");  // would not compile
+    println!("{t}");
+}`};
+  return m[l];
+}
+function hi(src,l){
+  const L=LANGS[l];
+  return src.split('\n').map(line=>{
+    let cm='', body=line;
+    const i=line.indexOf(L.cm===('#')?'#':'//');
+    if(i>-1){cm=line.slice(i);body=line.slice(0,i)}
+    let h=esc(body).replace(/("[^"]*")/g,'<span class="s">$1</span>').replace(L.kw,'<span class="k">$&</span>').replace(/\b(\d+)\b(?![^<]*>)/g,'<span class="n">$1</span>');
+    return h+(cm?'<span class="c">'+esc(cm)+'</span>':'');
+  });
+}
+const OUT={
+  javascript:'saved abc\n',
+  typescript:'{ success: true, data: { id: 1, email: "ada@lovelace.dev" } }\n',
+  go:'worker 2 job 1\nworker 1 job 2\nworker 3 job 3\n',
+  rust:'hello\n'
+};
+function solve(){
+  const g={A:{B:4,C:2},B:{D:wBD},C:{B:1,D:5},D:{}};
+  const dist={A:0},prev={},q=new Set(Object.keys(g));
+  while(q.size){let u=null;q.forEach(n=>{if(dist[n]!==undefined&&(u===null||dist[n]<dist[u]))u=n});if(u===null)break;q.delete(u);
+    for(const v in g[u]){const d=dist[u]+g[u][v];if(dist[v]===undefined||d<dist[v]){dist[v]=d;prev[v]=u}}}
+  const path=['D'];while(prev[path[0]])path.unshift(prev[path[0]]);
+  return {cost:dist.D,path};
+}
+const POS={A:[50,140],B:[210,50],C:[210,230],D:[390,140]};
+const EDGES=[['A','B',()=>4],['A','C',()=>2],['C','B',()=>1],['B','D',()=>wBD],['C','D',()=>5]];
+function drawGraph(path){
+  const hit=(a,b)=>path.some((n,i)=>(n===a&&path[i+1]===b)||(n===b&&path[i+1]===a));
+  let s='';
+  EDGES.forEach(([a,b,w])=>{const[x1,y1]=POS[a],[x2,y2]=POS[b];
+    s+=`<line class="edge ${hit(a,b)?'hit':''}" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"/>`;
+    const mx=(x1+x2)/2,my=(y1+y2)/2;
+    s+=`<rect x="${mx-13}" y="${my-10}" width="26" height="20" rx="6" fill="var(--surface)" stroke="var(--line)"/><text class="w" x="${mx}" y="${my+4}" text-anchor="middle">${w()}</text>`});
+  for(const n in POS){const[x,y]=POS[n];
+    s+=`<circle class="node ${path.includes(n)?'hit':''}" cx="${x}" cy="${y}" r="20"/><text x="${x}" y="${y+5}" text-anchor="middle">${n}</text>`}
+  $('#graph').innerHTML=s;
+}
+
+let lang='python', hlLine=-1;
+function renderCode(){
+  const lines=hi(sample(lang),lang);
+  const target=$('#code');
+  target.innerHTML=lines.map((h,i)=>`<div class="${i===hlLine?'hl':''}">${h||' '}</div>`).join('');
+  $('#popCode').innerHTML=hi(sample(lang),lang).slice(0,7).join('\n');
+}
+function renderDeps(){
+  $('#depList').innerHTML=LANGS[lang].deps.map(d=>`<span class="dep">${d[0]} <em>${d[1]}</em></span>`).join('');
+}
+/* missing-package flow */
+const missing=()=>NEED.filter(n=>!LANGS.python.deps.some(d=>d[0]===n.pkg));
+function needBarRender(m){
+  const b=$('#needBar');b.hidden=false;
+  b.innerHTML=`<div class="nb-h"><b>This snippet needs ${m.length} package${m.length>1?'s':''}</b><span class="note">Installed only for this snippet. Unverified packages stay unchecked until you review them.</span></div>`
+    +m.map(n=>`<label class="nb-r"><input type="checkbox" data-pkg="${n.pkg}" ${n.safe?'checked':''}><code>${n.pkg}</code><span class="tag ${n.safe?'':'a'}">${n.note}</span></label>`).join('')
+    +`<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap"><button class="btn primary sm" id="nbInstall">Install selected</button><button class="btn sm" id="nbSkip">Not now</button><span class="note" id="nbMsg"></span></div>`;
+}
+function demoOut(){
+  selectOut('con');
+  const m=missing();
+  if(m.length){
+    $('#conText').innerHTML=`<span class="dim">$ python main.py</span>\n<span style="color:var(--accent)">ModuleNotFoundError: No module named '${m[0].pkg}'</span>`;
+    $('#popOut').textContent='Missing '+m[0].pkg;needBarRender(m);
+  } else {
+    $('#needBar').hidden=true;
+    $('#conText').innerHTML=`<span class="dim">$ python main.py</span>\n[1.38196601 3.61803399]\n<span class="ok">✓ finished in 61 ms</span>`;
+    $('#popOut').textContent='[1.38 3.62] · 61 ms';
+  }
+}
+$('#needBar').addEventListener('click',e=>{
+  if(e.target.id==='nbSkip'){$('#needBar').hidden=true;return}
+  if(e.target.id!=='nbInstall')return;
+  const sel=$$('#needBar [data-pkg]:checked').map(x=>NEED.find(n=>n.pkg===x.dataset.pkg));
+  if(!sel.length){toast('Pick at least one package');return}
+  const msg=$('#nbMsg');e.target.disabled=true;msg.textContent='Resolving '+sel.map(s=>s.pkg).join(', ')+'…';
+  setTimeout(()=>msg.textContent='Downloading… ',600);
+  setTimeout(()=>{sel.forEach(s=>LANGS.python.deps.push([s.pkg,s.ver]));renderDeps();envRender();toast('Installed '+sel.map(s=>s.pkg).join(', ')+', running again');renderOut()},1500);
+});
+$$('.side [data-demo]').forEach(b=>b.onclick=()=>{
+  demo=b.dataset.demo==='1';LANGS.python.deps=demo?[]:[['heapq','stdlib']];wBD=7;
+  $$('.side .item').forEach(x=>x.setAttribute('aria-current',x===b));
+  setLang('python');
+});
+function renderOut(){
+  const isPy=lang==='python';
+  if(isPy&&demo){demoOut();return}
+  if(isPy){$('#inW').value=wBD;$('#inWO').textContent=wBD;const r=solve();drawGraph(r.path);$('#rPath').textContent=r.path.join(' → ');$('#rCost').textContent=r.cost;
+    $('#conText').innerHTML=`<span class="dim">$ python main.py</span>\ncost = ${r.cost}\npath = ${r.path.join(' -> ')}`+(trace?`\n<span class="dim">trace</span>\n  pop A (0)\n  pop C (2)  relax B=3, D=7\n  pop B (3)  relax D=${3+wBD}${3+wBD<7?' ← better':''}\n  pop D (${r.cost})`:'')+`\n<span class="ok">✓ finished in 0.4 ms</span>`;
+    $('#popOut').textContent=`cost ${r.cost} · ${r.path.join('→')} · 38 ms`;
+    $('#outPrev').hidden=$('#outTabs [data-t=prev]').getAttribute('aria-selected')!=='true';
+  } else {
+    $('#conText').innerHTML=`<span class="dim">$ ${lang==='go'?'go run':lang==='rust'?'cargo run':lang==='typescript'?'tsx':'node'} main</span>\n${esc(OUT[lang])}<span class="ok">✓ finished in 52 ms</span>`;
+    $('#popOut').textContent=OUT[lang].split('\n')[0]+' · 52 ms';
+    selectOut('con');
+  }
+}
+function selectOut(t){
+  $$('#outTabs button').forEach(b=>b.setAttribute('aria-selected',b.dataset.t===t));
+  $('#outPrev').hidden=t!=='prev'; $('#outCon').hidden=t!=='con';
+}
+function setLang(l){
+  lang=l;hlLine=-1;if(!(demo&&l==='python'))$('#needBar').hidden=true;
+  $('#winName').textContent={python:demo?'Matrix eigenvalues':'Shortest path (Dijkstra)',javascript:'Debounce vs throttle',typescript:'Zod schema check',go:'Worker pool in Go',rust:'Ownership demo'}[l];
+  renderLangs();envRender();
+  renderCode();renderDeps();
+  if(l!=='python')selectOut('con');else selectOut('prev');
+  renderOut();
+}
+/* Python is the default; every other runtime lives behind "More". */
+function renderLangs(){
+  const others=Object.keys(LANGS).filter(k=>k!=='python');
+  const build=(chip)=>{
+    const item=(k,on)=>chip
+      ?`<button class="chip" data-l="${k}" aria-pressed="${on}"><i style="background:${LANGS[k].color}"></i>${LANGS[k].name}</button>`
+      :`<button role="tab" data-l="${k}" aria-selected="${on}">${LANGS[k].name}</button>`;
+    return item('python',lang==='python')
+      +(lang!=='python'?item(lang,true):'')
+      +`<span class="more"><button class="${chip?'chip':'morebtn'}" data-more aria-haspopup="menu" aria-expanded="false">More ▾</button>`
+      +`<span class="menu" role="menu" hidden>${others.filter(k=>k!==lang).map(k=>`<button role="menuitem" data-l="${k}"><i class="dot" style="background:${LANGS[k].color}"></i>${LANGS[k].name}</button>`).join('')}<span class="soon">Go, Rust, Ruby, Swift, SQL and more</span></span></span>`;
+  };
+  $('#langTabs').innerHTML=build(false);
+  $('#popLangs').innerHTML=build(true);
+}
+document.addEventListener('click',e=>{
+  const m=e.target.closest('[data-more]');
+  $$('.more .menu').forEach(x=>{ if(!m||x!==m.nextElementSibling) x.hidden=true; });
+  if(m){const x=m.nextElementSibling;x.hidden=!x.hidden;m.setAttribute('aria-expanded',!x.hidden);return}
+  const b=e.target.closest('[data-l]');if(b)setLang(b.dataset.l);
+});
+$('#outTabs').addEventListener('click',e=>{const b=e.target.closest('[data-t]');if(b&&(lang==='python'||b.dataset.t==='con'))selectOut(b.dataset.t)});
+
+function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('on');clearTimeout(toast.t);toast.t=setTimeout(()=>t.classList.remove('on'),1800)}
+function show(v){
+  $$('.seg [data-view]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.view===v));
+  $$('.view').forEach(s=>s.classList.toggle('on',s.id==='v-'+v));
+  $('#mbIcon').setAttribute('aria-pressed',v==='menu');
+}
+$$('.seg [data-view]').forEach(b=>b.onclick=()=>show(b.dataset.view));
+$('#mbIcon').onclick=()=>show('menu');
+$('#popOpen').onclick=()=>show('app');
+$$('[data-open]').forEach(b=>b.onclick=()=>{setLang('python');show('app')});
+
+function flashRun(btn){const o=btn.textContent;btn.textContent='Running…';setTimeout(()=>{btn.textContent=o;renderOut();toast('Ran in 38 ms')},350)}
+$('#runBtn').onclick=e=>flashRun(e.currentTarget);
+$('#popRun').onclick=e=>flashRun(e.currentTarget);
+/* panels */
+const PANELS=['sharePanel','histPanel','sbPanel','envPanel'], PBTN={sharePanel:'shareBtn',histPanel:'histBtn',sbPanel:'sbBtn',envPanel:'envBtn'};
+function closeAll(){PANELS.forEach(id=>{$('#'+id).hidden=true;$('#'+PBTN[id]).setAttribute('aria-expanded','false')})}
+function togglePanel(id){const open=$('#'+id).hidden;closeAll();if(!open)return;$('#'+id).hidden=false;$('#'+PBTN[id]).setAttribute('aria-expanded','true');
+  if(id==='sharePanel')shareOpen(true);if(id==='histPanel')histRender();if(id==='envPanel')envRender()}
+$('#histBtn').onclick=()=>togglePanel('histPanel');
+$('#sbBtn').onclick=()=>togglePanel('sbPanel');
+$('#envBtn').onclick=()=>togglePanel('envPanel');
+$('#addDep').onclick=()=>{togglePanel('envPanel');if(!$('#envPanel').hidden)$('#envAdd').focus()};
+
+/* sandbox */
+function sbRender(){const n=$('#sbNet').checked,f=$('#sbFiles').checked;
+  $('#sbTxt').textContent=n||f?'Sandbox · '+[n&&'network',f&&'files'].filter(Boolean).join(' + ')+' on':'Sandboxed';
+  $('#sbDot').style.color=n||f?'var(--accent)':'var(--ok)'}
+$('#sbNet').onchange=sbRender;$('#sbFiles').onchange=sbRender;
+
+/* environment */
+const RT={python:['Python 3.13 (managed)','Python 3.12','Python 3.11'],javascript:['Node 22 (managed)','Bun 1.2','Deno 2'],typescript:['Bun 1.2 (managed)','Node 22 + tsx'],go:['Go 1.23 (managed)'],rust:['Rust stable (managed)']};
+function envRender(){
+  $('#rtVer').innerHTML=RT[lang].map(r=>`<option>${r}</option>`).join('');
+  $('#envLbl').textContent=RT[lang][0].replace(' (managed)','');
+  $('#envList').innerHTML=LANGS[lang].deps.map((d,i)=>`<div class="envrow">${d[0]}<em>${d[1]}</em>${d[1]==='stdlib'?'':`<button data-rm="${i}" aria-label="Remove ${d[0]}">✕</button>`}</div>`).join('');
+}
+$('#rtVer').onchange=()=>{$('#envLbl').textContent=$('#rtVer').value.replace(' (managed)','');toast('Switched runtime, environment rebuilt in 0.8 s')};
+$('#envList').onclick=e=>{const b=e.target.closest('[data-rm]');if(!b)return;LANGS[lang].deps.splice(+b.dataset.rm,1);renderDeps();envRender()};
+$('#envInstall').onclick=()=>{
+  const name=($('#envAdd').value.trim()||'numpy').toLowerCase(),note=$('#envNote');
+  note.textContent='Resolving '+name+'…';
+  setTimeout(()=>note.textContent='Resolved in 0.4 s · downloading 3 files…',500);
+  setTimeout(()=>{LANGS[lang].deps.push([name,'2.1.3']);renderDeps();envRender();$('#envAdd').value='';
+    note.textContent='Installed '+name+' in 1.6 s. Only this snippet can see it.';toast(name+' added')},1300);
+};
+$('#envAdd').addEventListener('keydown',e=>{if(e.key==='Enter')$('#envInstall').click()});
+
+/* history */
+const clock=()=>new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+const HIST=[
+  {who:'You',a:0,s:'Created snippet',t:'14:01',w:7},
+  {who:'Claude Code',a:1,s:'Wrote Dijkstra with heapq',t:'14:03',w:7}
+];
+function pushHist(who,a,s,w,d){HIST.push({who,a,s,w,d,t:clock()})}
+function histRender(){
+  $('#histList').innerHTML=HIST.slice().reverse().map((h,i)=>`<div class="hrow ${i===0?'cur':''}"><div class="top"><b>${h.s}</b><span class="t">${h.t}</span></div>
+    <div class="top">${h.a?'<span class="badge-agent">'+h.who+'</span>':'<span class="chip" style="padding:1px 8px">You</span>'}${i===0?'<span class="tag">Current</span>':''}</div>
+    ${h.d?`<pre><span class="m">${esc(h.d[0])}</span>\n<span class="p">${esc(h.d[1])}</span></pre>`:''}
+    ${i===0?'':`<button class="btn sm" data-restore="${HIST.length-1-i}">Restore this version</button>`}</div>`).join('');
+}
+$('#histList').onclick=e=>{const b=e.target.closest('[data-restore]');if(!b)return;
+  const h=HIST[+b.dataset.restore];wBD=h.w;hlLine=-1;renderCode();renderOut();pushHist('You',0,'Restored: '+h.s,h.w);histRender();toast('Restored version from '+h.t)};
+
+/* inputs found in code */
+$('#inW').oninput=()=>{wBD=+$('#inW').value;hlLine=5;renderCode();renderOut()};
+$('#inW').onchange=()=>{pushHist('You',0,'Set B → D cost to '+wBD,wBD,['  "B": [("D", '+HIST[HIST.length-1].w+')]','  "B": [("D", '+wBD+')]'])};
+
+/* language detection in the menu bar popover */
+$('#popSearch').addEventListener('input',e=>{
+  const v=e.target.value;if(v.length<10)return;
+  const g=/\bfunc\b.*\{|package main/.test(v)?'go':/\bfn\b.*\{|let mut/.test(v)?'rust':/:\s*(string|number)\b|\binterface\b/.test(v)?'typescript':/\bconst\b|=>|console\.log/.test(v)?'javascript':/\bdef\b|\bimport\b.*|print\(/.test(v)?'python':null;
+  if(g){setLang(g);$('#popDetect').textContent='✓ Detected '+LANGS[g].name+' from what you pasted · runtime warm'}
+});
+$('#agentToggle').onclick=e=>{const on=$('#appGrid').classList.toggle('with-agent');e.currentTarget.setAttribute('aria-pressed',on)};
+
+/* share */
+function shareOpen(on){const p=$('#sharePanel');p.hidden=!on;$('#shareBtn').setAttribute('aria-expanded',on);
+  if(on){$('#shareCode').innerHTML=hi(sample(lang),lang).slice(0,5).join('\n');$('#shareMeta').textContent=LANGS[lang].name+' · '+sample(lang).split('\n').length+' lines'}}
+$('#shareBtn').onclick=()=>togglePanel('sharePanel');
+$('#copyLink').onclick=()=>{const t=$('#shareLink');t.select();(navigator.clipboard?navigator.clipboard.writeText(t.value):Promise.reject()).catch(()=>{}).finally(()=>toast('Link copied'))};
+$('#nets').onclick=e=>{const b=e.target.closest('[data-n]');if(b)toast('Opens a '+b.dataset.n+' post with the link and preview card')};
+$('#copyImg').onclick=()=>toast('Image card copied');
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeAll()});
+$('#popOpen').addEventListener('click',()=>shareOpen(false));
+
+/* agents */
+const AGENTS=[
+  {id:'claude',name:'Claude Code',mark:'C',color:'#D97757',kind:'Headless',status:'on',sub:'Runs as a background process, no window',cmd:'claude -p --output-format stream-json --mcp-config runlet.json',perms:[['Run code in sandbox',1],['Install packages',1],['Network access',0]]},
+  {id:'codex',name:'Codex (OpenAI)',mark:'O',color:'#10A37F',kind:'ACP bridge',status:'on',sub:'ChatGPT plan sign-in via Codex CLI',cmd:'codex-acp  ·  stdio JSON-RPC',perms:[['Run code in sandbox',1],['Install packages',0],['Network access',0]]},
+  {id:'gemini',name:'Gemini CLI',mark:'G',color:'#4C7DF0',kind:'ACP',status:'found',sub:'Found on this Mac, not enabled',cmd:'gemini --experimental-acp',perms:[['Run code in sandbox',1],['Install packages',0],['Network access',0]]},
+  {id:'custom',name:'Other ACP agent',mark:'+',color:'#667085',kind:'ACP',status:'off',sub:'Goblin, OpenCode, your own',cmd:'your-agent --acp',perms:[]}
+];
+function renderAgents(){
+  $('#agentCards').innerHTML=AGENTS.map(a=>`<article class="acard">
+    <header><i style="background:${a.color}">${a.mark}</i><div style="min-width:0"><h3>${a.name}</h3><div class="sub">${a.kind} · ${a.sub}</div></div></header>
+    <div class="row"><span class="status ${a.status}">${a.status==='on'?'Connected':a.status==='found'?'Detected':'Not set up'}</span></div>
+    <code>${a.cmd}</code>
+    ${a.perms.length?`<div class="perms">${a.perms.map(p=>`<label><input type="checkbox" ${p[1]?'checked':''}> ${p[0]}</label>`).join('')}</div>`:''}
+    <div class="row"><button class="btn sm" data-test="${a.id}">${a.status==='on'?'Test connection':a.status==='found'?'Enable':'Add command'}</button></div>
+  </article>`).join('');
+}
+$('#agentCards').onclick=e=>{const b=e.target.closest('[data-test]');if(!b)return;const a=AGENTS.find(x=>x.id===b.dataset.test);
+  toast(a.status==='on'?a.name+' replied in 210 ms':a.status==='found'?a.name+' enabled':'Paste the command that starts your ACP agent')};
+renderAgents();
+const connected=()=>AGENTS.filter(a=>a.status==='on');
+
+/* capture flow */
+const EX={
+  phys:{type:'Physics',title:'Projectile motion',
+    text:'A ball is launched from level ground at 45° above the horizontal with a speed of 20 m/s. Taking g = 9.81 m/s², find the range and the maximum height.',
+    tags:['Physics','Kinematics','Has numbers'],
+    steps:['Read the problem: launch angle, speed and g','Wrote <code>projectile.py</code> using the closed-form equations','Ran it: range 40.77 m, max height 10.19 m','Opened a live preview with sliders']},
+  math:{type:'Maths',title:'Area under sin x',
+    text:'Find the area under y = sin x from 0 to b. For what value of b is the area exactly 1?',
+    tags:['Maths','Integral','Has a graph'],
+    steps:['Read the problem: ∫ sin x dx from 0 to b','Wrote <code>area.py</code> with the closed form 1 − cos b','Ran it: area = 1 at b = π/2 ≈ 1.571','Opened a live preview with a slider']}
+};
+let ex='phys',cstep=0,capTimers=[];
+function paperHTML(){
+  const e=EX[ex];
+  return `<h5>Chapter 3 · Problems</h5><p>3.1 Two cars approach an intersection from perpendicular directions at constant speed.</p><p><span class="sel ${cstep>0?'done':''}" id="selText">3.2 ${esc(e.text)}</span></p><p>3.3 A block slides down a frictionless incline of height 2 m.</p>`;
+}
+function capReset(){
+  capTimers.forEach(clearTimeout);capTimers=[];cstep=0;
+  $('#paper').innerHTML=paperHTML();
+  $('#capCard').className='capcard empty';$('#capCard').textContent='The captured text or image lands here with its type detected.';
+  $('#capLog').hidden=true;$('#capLog').innerHTML='';
+  $('#capResult').className='capres empty';$('#capResult').textContent="Your agent's visual opens here through the magic link, with sliders you can drag.";
+  $('#capBtn').disabled=false;
+}
+function capCapture(){
+  if(cstep>0)return; cstep=1;
+  const e=EX[ex];
+  $('#paper').innerHTML=paperHTML();
+  const c=$('#capCard');c.className='capcard';
+  c.innerHTML=`<div class="thumb">${esc(e.text)}</div><div class="chips">${e.tags.map((t,i)=>`<span class="tag ${i?'a':''}">${t}</span>`).join('')}</div><label for="capPrompt" class="note" style="display:block;margin-bottom:4px">Tell your agent what you want</label><textarea id="capPrompt">Solve this, write the code, and show me a picture I can play with.</textarea><div class="row" style="display:flex;gap:6px;flex-wrap:wrap"><label for="capAgent" class="note" style="align-self:center">Send to</label><select id="capAgent" style="border:1px solid var(--line);background:var(--surface2);color:var(--ink);border-radius:9px;padding:6px 8px;font:inherit">${connected().map(a=>`<option value="${a.name}">${a.name} · ${a.kind}</option>`).join('')}</select><button class="btn primary" id="capSend">Send ✦</button></div>`;
+  $('#capSend').onclick=capSend;
+  $('#capBtn').disabled=true;
+}
+function capSend(){
+  if(cstep!==1)return; cstep=2;
+  const e=EX[ex],log=$('#capLog');
+  const ag=AGENTS.find(a=>a.name===$('#capAgent').value);
+  $('#capSend').disabled=true;$('#capAgent').disabled=true;$('#capSend').textContent='Sent';
+  toast('Sent to '+ag.name+(ag.kind==='Headless'?' (headless)':' over ACP'));
+  log.hidden=false;log.innerHTML='';
+  e.steps.forEach((s,i)=>capTimers.push(setTimeout(()=>{
+    const d=document.createElement('div');d.innerHTML=`<i>✓</i><span>${s}</span>`;log.append(d);
+    if(i===e.steps.length-1)capResult();
+  },500+i*650)));
+}
+function capResult(){
+  cstep=3;const r=$('#capResult');r.className='capres';
+  r.innerHTML=`<div id="capViz"></div>
+    <button class="link-card" id="capLink" style="margin-top:12px"><svg width="30" height="30" viewBox="0 0 64 64" aria-hidden="true"><rect x="2" y="2" width="60" height="60" rx="15" fill="#FF5B2E"/><path d="M19 21 L33 32 L19 43" fill="none" stroke="#fff" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></svg><div style="min-width:0"><b>Open "${EX[ex].title}" in RunLet</b><span>runlet://open/${ex==='phys'?'c41b-projectile':'7d02-area'}?live=1</span></div></button>`;
+  $('#capLink').onclick=()=>toast('Opens the generated Python in the full app');
+  ex==='phys'?physViz():mathViz();
+}
+function physViz(){
+  $('#capViz').innerHTML=`<svg class="plot" viewBox="0 0 400 230" id="pp" role="img" aria-label="Projectile trajectory"></svg>
+  <div class="sliders">
+    <label for="ang">Angle <input id="ang" type="range" min="10" max="80" value="45"><output id="angO">45°</output></label>
+    <label for="spd">Speed <input id="spd" type="range" min="5" max="30" value="20"><output id="spdO">20 m/s</output></label>
+  </div>
+  <div class="result"><div class="stat"><small>Range</small><b id="sR">40.77 m</b></div><div class="stat"><small>Max height</small><b id="sH">10.19 m</b></div></div>
+  <div class="eq">R = v² sin 2θ / g · H = v² sin² θ / 2g</div>`;
+  const draw=()=>{
+    const a=+$('#ang').value,v=+$('#spd').value,g=9.81,th=a*Math.PI/180;
+    const R=v*v*Math.sin(2*th)/g,H=v*v*Math.sin(th)**2/(2*g);
+    $('#angO').textContent=a+'°';$('#spdO').textContent=v+' m/s';$('#sR').textContent=R.toFixed(2)+' m';$('#sH').textContent=H.toFixed(2)+' m';
+    const X=x=>38+x*3.5,Y=y=>196-y*6;let s='';
+    for(let x=0;x<=100;x+=20)s+=`<line class="grid" x1="${X(x)}" y1="${Y(0)}" x2="${X(x)}" y2="${Y(30)}"/><text x="${X(x)}" y="212" text-anchor="middle">${x}</text>`;
+    for(let y=0;y<=30;y+=10)s+=`<line class="grid" x1="${X(0)}" y1="${Y(y)}" x2="${X(100)}" y2="${Y(y)}"/><text x="30" y="${Y(y)+3}" text-anchor="end">${y}</text>`;
+    s+=`<line class="axis" x1="${X(0)}" y1="${Y(0)}" x2="${X(100)}" y2="${Y(0)}"/><text x="${X(100)}" y="226" text-anchor="end">metres</text>`;
+    let p='';for(let i=0;i<=60;i++){const x=R*i/60,y=x*Math.tan(th)-g*x*x/(2*v*v*Math.cos(th)**2);p+=(i?'L':'M')+X(x).toFixed(1)+' '+Y(Math.max(y,0)).toFixed(1)}
+    s+=`<path class="curve" d="${p}"/><circle class="pt" cx="${X(R/2)}" cy="${Y(H)}" r="5"/><circle class="pt" cx="${X(R)}" cy="${Y(0)}" r="5"/><text x="${X(R/2)+8}" y="${Y(H)-8}">${H.toFixed(1)} m</text>`;
+    $('#pp').innerHTML=s;
+  };
+  $('#ang').oninput=draw;$('#spd').oninput=draw;draw();
+}
+function mathViz(){
+  $('#capViz').innerHTML=`<svg class="plot" viewBox="0 0 400 230" id="pp" role="img" aria-label="Area under sine curve"></svg>
+  <div class="sliders"><label for="bb">Upper limit b <input id="bb" type="range" min="0.1" max="3.14" step="0.01" value="1.57"><output id="bbO">1.57</output></label></div>
+  <div class="result"><div class="stat"><small>Area</small><b id="sA">1.000</b></div><div class="stat"><small>Target</small><b id="sT">1</b></div></div>
+  <div class="eq">∫₀ᵇ sin x dx = 1 − cos b</div>`;
+  const draw=()=>{
+    const b=+$('#bb').value;$('#bbO').textContent=b.toFixed(2);const A=1-Math.cos(b);$('#sA').textContent=A.toFixed(3);
+    const X=x=>38+x*100,Y=y=>196-y*150;let s='';
+    for(let x=0;x<=3;x++)s+=`<line class="grid" x1="${X(x)}" y1="${Y(0)}" x2="${X(x)}" y2="${Y(1.1)}"/><text x="${X(x)}" y="212" text-anchor="middle">${x}</text>`;
+    for(const y of [0,.5,1])s+=`<line class="grid" x1="${X(0)}" y1="${Y(y)}" x2="${X(3.3)}" y2="${Y(y)}"/><text x="30" y="${Y(y)+3}" text-anchor="end">${y}</text>`;
+    s+=`<line class="axis" x1="${X(0)}" y1="${Y(0)}" x2="${X(3.3)}" y2="${Y(0)}"/>`;
+    let a=`M${X(0)} ${Y(0)}`,c='';for(let i=0;i<=60;i++){const x=b*i/60;a+=`L${X(x).toFixed(1)} ${Y(Math.sin(x)).toFixed(1)}`}
+    a+=`L${X(b)} ${Y(0)}Z`;
+    for(let i=0;i<=80;i++){const x=Math.PI*i/80;c+=(i?'L':'M')+X(x).toFixed(1)+' '+Y(Math.sin(x)).toFixed(1)}
+    s+=`<path class="area" d="${a}"/><path class="curve" d="${c}"/><circle class="pt" cx="${X(b)}" cy="${Y(Math.sin(b))}" r="5"/>`;
+    $('#pp').innerHTML=s;
+  };
+  $('#bb').oninput=draw;draw();
+}
+$$('[data-ex]').forEach(b=>b.onclick=()=>{ex=b.dataset.ex;$$('[data-ex]').forEach(x=>x.setAttribute('aria-pressed',x===b));capReset()});
+$('#capBtn').onclick=capCapture;
+$('#popCap').onclick=()=>{show('cap');capReset()};
+capReset();
+
+/* agent actions */
+function say(cls,who,txt){const d=document.createElement('div');d.className='msg '+cls;d.innerHTML=`<span class="who">${who}</span>${txt}`;$('#log').append(d);$('#log').scrollTop=1e5}
+function ask(q){
+  say('you','You',esc(q));
+  setLang('python');
+  setTimeout(()=>{
+    if(/cost 1|B.*D.*1/i.test(q)){
+      pushHist('Claude Code',1,'Set B → D cost to 1',1,['  "B": [("D", '+wBD+')]','  "B": [("D", 1)]']);
+      wBD=1;hlLine=5;renderCode();say('ai','Claude','Changed line 6 to cost 1. The best route now goes through B. Saved as a new version you can undo.');
+      renderOut();$('#liveTag').textContent='Agent edited line 6';setTimeout(()=>$('#liveTag').textContent='Live',2500);
+    } else if(/fetch|distance/i.test(q)){
+      say('ai','Claude','To fetch real road distances I need network access. It is off for this snippet.<div class="allowrow"><button class="btn primary sm" data-allow="1">Allow once</button><button class="btn sm" data-allow="0">Keep it off</button></div>');
+    } else if(/trace/i.test(q)){
+      trace=true;renderOut();selectOut('con');say('ai','Claude','Added a trace to the console tab. It shows each node as it is settled.');
+    } else say('ai','Claude','In the real app I would edit the snippet and re-run it. This mock supports the two suggestions below.');
+  },500);
+}
+$$('[data-ask]').forEach(b=>b.onclick=()=>ask(b.dataset.ask));
+$('#log').addEventListener('click',e=>{const b=e.target.closest('[data-allow]');if(!b)return;
+  const on=b.dataset.allow==='1';b.parentElement.remove();
+  if(on){$('#sbNet').checked=true;sbRender();say('ai','Claude','Network is on for this run only. I fetched 4 distances and will switch it off again.');
+    setTimeout(()=>{$('#sbNet').checked=false;sbRender()},2500)}
+  else say('ai','Claude','Okay, I will use the sample distances instead.')});
+$('#askForm').onsubmit=e=>{e.preventDefault();const v=$('#askInput').value.trim();if(v){ask(v);$('#askInput').value=''}};
+$('#magic').onclick=()=>{
+  wBD=7;trace=false;setLang('python');
+  $('#appGrid').classList.add('with-agent');$('#agentToggle').setAttribute('aria-pressed',true);
+  show('app');toast('RunLet opened from agent link');
+};
+setLang('python');
+</script>

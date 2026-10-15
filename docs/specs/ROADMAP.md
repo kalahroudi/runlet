@@ -1,0 +1,27 @@
+# Roadmap
+
+Each line is one spec and one PR. Build in order. Specs 001 to 007 give a working Python playground. Agent features start at 010.
+
+| # | Spec | Delivers | Depends on |
+|---|------|----------|------------|
+| 001 | [App shell](001-app-shell.md) | Menu bar app that launches, shows a popover, opens a window and settings. CI builds it. | none |
+| 002 | Runner core | Run a Python string as a child process. Stream output, enforce a time limit, report exit status. | 001 |
+| 003 | Managed Python | Download and cache `uv` and Python 3.13. Create a fresh environment per snippet. | 002 |
+| 004 | Snippet store | Save snippets as files on disk with metadata. List, open, rename, delete. | 001 |
+| 005 | Editor and console | Window with a web-view editor (CodeMirror), Run button, console output. | 002, 004 |
+| 006 | Quick run popover | Paste into the menu bar popover, detect language, run, see output. | 002, 004 |
+| 007 | Missing packages (Python) | Detect imports, show the install bar, install on confirm, warn on unfamiliar names. | 003, 005 |
+| 008 | Sandbox | Run snippets with network and file access off. Per-snippet toggles. | 002 |
+| 009 | Preview pane and inputs | HTML or SVG preview in a web view. Sliders for numbers found in code. | 005 |
+| 010 | MCP server | Local MCP tools: create_snippet, run, install_package, read_output. | 005, 008 |
+| 011 | Magic link | `runlet://open/<id>` opens a snippet with its preview. Add an `open` MCP tool. | 009, 010 |
+| 012 | Claude Code (headless) | Run Claude Code as a background process wired to the MCP server. Agents card in settings. | 010 |
+| 013 | ACP bridge | ACP client so Codex, Gemini CLI and other agents connect. | 010 |
+| 014 | Version history | Save a version per run or agent edit. Diff and restore. Agent attribution. | 004 |
+| 015 | Capture | Global shortcut, grab selected text or a screen region, send to a connected agent. | 012 or 013 |
+| 016 | JavaScript and TypeScript | Managed Bun runtime, same install bar for npm packages. | 003, 007 |
+| 017 | Go and Rust | Managed toolchains. Compiler errors shown plainly. | 016 |
+| 018 | Share | Link, preview card, network buttons, optional Gist. | 009, 014 |
+| 019 | Spotlight and Shortcuts | Search snippets, run from Shortcuts. | 004, 002 |
+
+Specs after 001 are written one at a time, just before they are built, so they reflect what the earlier PRs actually delivered.
