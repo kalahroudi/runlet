@@ -27,6 +27,7 @@ struct PopoverView: View {
         }
         .frame(width: 380)
         .background(Color.rlBackground)
+        .onAppear { UpdateModel.shared.checkIfStale() }
     }
 }
 

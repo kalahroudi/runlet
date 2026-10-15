@@ -27,8 +27,16 @@ final class UpdateModel: ObservableObject {
         }
     }
 
+    private var lastCheck = Date.distantPast
+
+    /// Called when the popover opens: checks again unless a check ran in the last five minutes.
+    func checkIfStale() {
+        if Date().timeIntervalSince(lastCheck) > 300 { check() }
+    }
+
     func check() {
         guard !isBusy else { return }
+        lastCheck = Date()
         isBusy = true; status = "Checking…"; log = ""
         task = Task {
             let (info, git) = await load()
@@ -69,8 +77,6 @@ final class UpdateModel: ObservableObject {
         }
     }
 
-    func stop() { task?.cancel(); isBusy = false; status = "Stopped" }
-
     private func load() async -> (InstallInfo?, GitState?) {
         guard let info = InstallInfo.load() else { return (nil, nil) }
         return (info, await GitClient.state(for: info))
@@ -84,10 +90,6 @@ struct UpdateSection: View {
         VStack(alignment: .leading, spacing: 10) {
             RLSectionTitle("Version")
             Text(String(model.installedCommit.prefix(7))).font(RLFont.mono(13))
-            HStack {
-                Button("Check for updates") { model.check() }.buttonStyle(.rl).disabled(model.isBusy)
-                if model.isBusy { Button("Stop") { model.stop() }.buttonStyle(.rl) }
-            }
             Text(model.status).font(RLFont.body(13)).foregroundStyle(Color.rlMuted)
             if model.canUpdate && !model.isBusy {
                 Text("Use the Update button in the menu bar popover.").font(RLFont.body(12)).foregroundStyle(Color.rlMuted)
