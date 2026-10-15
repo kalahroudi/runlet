@@ -1,6 +1,6 @@
 # Spec 004: Snippet store
 
-Status: Draft
+Status: In progress
 Depends on: 001
 Size estimate: M (about 300 lines including tests)
 
@@ -49,15 +49,15 @@ public final class SnippetStore {
 - Unknown extra fields in `snippet.json` are kept when the file is rewritten.
 
 ## Acceptance criteria
-- [ ] Creating a snippet makes `<id>/main.py` with the exact source and a valid `snippet.json`.
-- [ ] `source(of:)` returns exactly what was saved, including non-ASCII text and a missing trailing newline.
-- [ ] `save` changes the source and `modified` but not `created` or the title.
-- [ ] `rename` changes the title and nothing else in the source.
-- [ ] `list` returns snippets newest modified first, and a stray folder without `main.py` is ignored.
-- [ ] A snippet with a deleted or corrupt `snippet.json` is still listed and still opens.
-- [ ] Ids such as `../x` or `a/b` are rejected for every method.
-- [ ] `delete` removes the snippet from `list` and from the root folder.
-- [ ] Unknown fields in `snippet.json` survive a save.
+- [x] Creating a snippet makes `<id>/main.py` with the exact source and a valid `snippet.json`.
+- [x] `source(of:)` returns exactly what was saved, including non-ASCII text and a missing trailing newline.
+- [x] `save` changes the source and `modified` but not `created` or the title.
+- [x] `rename` changes the title and nothing else in the source.
+- [x] `list` returns snippets newest modified first, and a stray folder without `main.py` is ignored.
+- [x] A snippet with a deleted or corrupt `snippet.json` is still listed and still opens.
+- [x] Ids such as `../x` or `a/b` are rejected for every method.
+- [x] `delete` removes the snippet from `list` and from the root folder.
+- [x] Unknown fields in `snippet.json` survive a save.
 - [ ] `swift test` and `./scripts/build.sh` pass in CI.
 
 ## Test plan
