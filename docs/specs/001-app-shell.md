@@ -1,6 +1,6 @@
 # Spec 001: App shell
 
-Status: Draft
+Status: Done (popover click-through still to be confirmed by hand)
 Depends on: none
 Size estimate: S (under 200 lines of hand-written code, plus project config)
 
@@ -31,15 +31,15 @@ Everything else needs a running app to live in. This spec produces a Mac app tha
 - Build tooling (changed from the first draft, which assumed Xcode and XcodeGen): a Swift package describes the targets for Xcode and CI. `scripts/build.sh` compiles with `swiftc` directly and assembles `build/RunLet.app`, so a Mac with only the Command Line Tools can build it. `scripts/install.sh` builds, copies to `/Applications` and opens the app.
 
 ## Acceptance criteria
-- [ ] `./scripts/build.sh` succeeds on a Mac with the Command Line Tools and produces `build/RunLet.app`.
+- [x] `./scripts/build.sh` succeeds on a Mac with the Command Line Tools and produces `build/RunLet.app`.
 - [ ] Launching the app shows a menu bar icon and no Dock icon.
 - [ ] The popover shows "RunLet", "Open in window", "Settings…" and "Quit". Quit exits the app.
 - [ ] "Open in window" opens one window. Pressing it a second time does not create another.
 - [ ] Settings opens with the General and Agents tabs.
-- [ ] `swift test` passes. The tests assert that showing the window twice creates one window, and that showing it after it closed creates a new one.
-- [ ] The CI workflow (`.github/workflows/ci.yml`) runs `swift test` and `./scripts/build.sh` on pull requests.
-- [ ] The app has an icon (Dock and Finder).
-- [ ] `README.md` starts with the icon and screenshots, then an agent section, then install steps for people.
+- [x] `swift test` passes. The tests assert that showing the window twice creates one window, and that showing it after it closed creates a new one.
+- [x] The CI workflow (`.github/workflows/ci.yml`) runs `swift test` and `./scripts/build.sh` on pull requests.
+- [x] The app has an icon (Dock and Finder).
+- [x] `README.md` starts with the icon and screenshots, then an agent section, then install steps for people.
 
 ## Test plan
 - Unit test for the window coordinator.
