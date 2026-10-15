@@ -25,6 +25,6 @@ Each line is one spec and one PR. Build in order. Specs 001 to 007 give a workin
 | 019 | Spotlight and Shortcuts | Search snippets, run from Shortcuts. | 004, 002 |
 | 020 | [Update from the app](020-self-update.md)  | "Update RunLet" in the popover: fetch latest main, rebuild, relaunch. Source installs only. | 001 |
 | 021 | Signed downloads and updates | Developer ID signing, notarization, release builds and in-app updates (Sparkle) for people who do not build from source. | 020 |
-| 022 | [Visual style](022-visual-style.md) (draft) | Design kit from the mock (colours, fonts, buttons, cards) applied to the popover, main window and Settings. | 001 |
+| 022 | [Visual style](022-visual-style.md) (done) | Design kit from the mock (colours, fonts, buttons, cards) applied to the popover, main window and Settings. | 001 |
 
 Specs after 001 are written one at a time, just before they are built, so they reflect what the earlier PRs actually delivered.
