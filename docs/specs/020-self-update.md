@@ -1,6 +1,6 @@
 # Spec 020: Update from the app
 
-Status: Draft
+Status: In progress
 Depends on: 001
 Size estimate: S (about 150 lines including tests)
 
@@ -24,7 +24,7 @@ Today the only way to update RunLet is to open a terminal in the repo and run `.
 - Uses `ProcessRunner` from spec 002 for git and the build, so output is streamed to an "Update" log with a Stop button.
 
 ## Acceptance criteria
-- [ ] After `scripts/install.sh`, `install.json` exists and the commit in it matches `git rev-parse HEAD`.
+- [x] After `scripts/install.sh`, `install.json` exists and the commit in it matches `git rev-parse HEAD`.
 - [ ] With a newer commit on `origin/main`, Check shows "1 new change"; with none, "Up to date".
 - [ ] Update with newer commits pulls, rebuilds and relaunches the app, and Settings shows the new commit.
 - [ ] Update refuses, without changing anything, when the repo has local changes or is on another branch.
@@ -39,4 +39,5 @@ Today the only way to update RunLet is to open a terminal in the repo and run `.
 ## Risks and open questions
 - The app replaces itself, so the helper must outlive the app. Use `nohup` from the script and verify it survives the quit.
 - The repo path can move or be deleted. The error message must say so.
-- Product decision: this serves people who build from source. If RunLet is later shared as a download, Sparkle with signed releases is the right path and replaces this.
+- Product decision (approved by the product owner): source install only for now. Signed downloadable updates are spec 021.
+- The app stays running during the build and is replaced only by the last steps of `scripts/install.sh`, so a failed build leaves it in place. The relaunch step is the one that must be tried by hand.
