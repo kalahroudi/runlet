@@ -18,8 +18,6 @@ struct PopoverView: View {
                 Button("Settings…") { AppActivation.openSettings() }
                     .buttonStyle(.rlSmall).keyboardShortcut(",")
                 Spacer()
-                Text(UpdateModel.shared.installedCommit.prefix(7))
-                    .font(RLFont.mono(11)).foregroundStyle(Color.rlMuted)
                 Button("Quit") { NSApplication.shared.terminate(nil) }
                     .buttonStyle(.rlSmall).keyboardShortcut("q")
             }

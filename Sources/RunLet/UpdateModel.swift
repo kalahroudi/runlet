@@ -86,10 +86,12 @@ struct UpdateSection: View {
             Text(String(model.installedCommit.prefix(7))).font(RLFont.mono(13))
             HStack {
                 Button("Check for updates") { model.check() }.buttonStyle(.rl).disabled(model.isBusy)
-                if model.canUpdate { Button("Update RunLet") { model.update() }.buttonStyle(.rlPrimary).disabled(model.isBusy) }
                 if model.isBusy { Button("Stop") { model.stop() }.buttonStyle(.rl) }
             }
             Text(model.status).font(RLFont.body(13)).foregroundStyle(Color.rlMuted)
+            if model.canUpdate && !model.isBusy {
+                Text("Use the Update button in the menu bar popover.").font(RLFont.body(12)).foregroundStyle(Color.rlMuted)
+            }
             if !model.log.isEmpty {
                 ScrollView { Text(model.log).font(RLFont.mono(11)).frame(maxWidth: .infinity, alignment: .leading) }
                     .scrollIndicators(.hidden).frame(height: 80)
