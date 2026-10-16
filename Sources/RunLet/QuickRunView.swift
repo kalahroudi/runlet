@@ -209,8 +209,7 @@ struct ConsoleView: View {
             if model.isRunning || !model.status.isEmpty {
                 divider
                 let ok = model.status.hasPrefix("Finished")
-                let base = model.isRunning ? "Running…" : (ok ? "✓ " : "") + model.status
-                RLStatusLine(text: model.runNotice.map { "\(base) · \($0)" } ?? base,
+                RLStatusLine(text: model.isRunning ? "Running…" : (ok ? "✓ " : "") + model.status,
                              isError: !model.isRunning && !ok && model.status.hasPrefix("Could not"),
                              isOK: ok)
                     .frame(maxWidth: .infinity, alignment: .leading)

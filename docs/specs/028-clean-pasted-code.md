@@ -1,6 +1,6 @@
 # Spec 028: Clean pasted code
 
-Status: In progress
+Status: Done
 Depends on: 005, 006, 026
 Size estimate: M (about 450 lines including tests)
 
@@ -21,7 +21,7 @@ Most code arrives by copy and paste, from chats, web pages, documents and termin
   6. **Curly quotes**: `“ ” ‘ ’` used as quotes outside strings and comments become straight quotes. Curly quotes inside a string or comment are text, and stay.
 - Paste handling (the popover box and the editor intercepting paste, with ⌘Z) moves to Spec 029, as the open questions below allowed. This spec delivers the cleaner with both modes and run handling.
 - Run handling: before every run the "run" mode is applied to a copy. The box and the saved snippet are not changed by it.
-- A notice: "Ran with indent removed." appended to the run status line, gone on the next edit. The paste notice text is produced by the cleaner and shown by Spec 029.
+- Run cleaning is silent: no notice is shown (product owner decision). The paste notice text is produced by the cleaner and shown by Spec 029.
 
 ## Non-goals
 - Reformatting style (line length, quotes, spacing, imports). That needs a formatter such as ruff, which arrives with managed Python (spec 003) and is a later spec.
@@ -43,9 +43,9 @@ Most code arrives by copy and paste, from chats, web pages, documents and termin
 - [x] Tests that clean text is unchanged (same string, no changes listed), and that cleaning twice gives the same result.
 - [x] Tests that "run" mode keeps the number of lines, and "paste" mode may drop fence and prompt lines.
 - [ ] (Spec 029) Pasting an indented block, a fenced block and a `>>>` transcript into the popover and into the editor yields code that runs, with the notice shown, and ⌘Z restores the original paste.
-- [x] Typing a leading space and pressing Run runs, shows "Ran with indent removed." in the status line, and leaves the box as typed.
-- [ ] `for i in range(200): print(i)` with a leading space runs.
-- [ ] `swift test` and `./scripts/build.sh` pass in CI.
+- [x] Typing a leading space and pressing Run runs silently, and leaves the box as typed.
+- [x] `for i in range(200): print(i)` with a leading space runs.
+- [x] `swift test` and `./scripts/build.sh` pass in CI.
 
 ## Test plan
 - Swift Testing tests for `CodeCleaner` (pure string in, string and change list out). The paste interception in both views is checked by hand and listed in the PR.
