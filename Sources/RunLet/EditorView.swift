@@ -15,6 +15,7 @@ struct EditorView: NSViewRepresentable {
     func makeNSView(context: Context) -> WKWebView {
         let configuration = WKWebViewConfiguration()
         configuration.userContentController.add(context.coordinator, name: "runlet")
+        configuration.userContentController.addScriptMessageHandler(context.coordinator, contentWorld: .page, name: "paste")
         configuration.websiteDataStore = .nonPersistent()
         let web = WKWebView(frame: .zero, configuration: configuration)
         web.setValue(false, forKey: "drawsBackground")
@@ -39,7 +40,7 @@ struct EditorView: NSViewRepresentable {
     }
 
     @MainActor
-    final class Coordinator: NSObject, WKScriptMessageHandler, WKNavigationDelegate {
+    final class Coordinator: NSObject, WKScriptMessageHandler, WKScriptMessageHandlerWithReply, WKNavigationDelegate {
         var parent: EditorView
         weak var web: WKWebView?
         private var ready = false
@@ -79,8 +80,18 @@ struct EditorView: NSViewRepresentable {
                 web?.evaluateJavaScript("RunLetEditor.focus()", completionHandler: nil)
             case "change":
                 if let text = body["text"] as? String { current = text; parent.text = text }
+            case "pasted":
+                QuickRunModel.shared.showPasteNotice(body["notice"] as? String)
             default: break
             }
+        }
+
+        /// The page sends pasted text here and gets the cleaned text back.
+        func userContentController(_ controller: WKUserContentController, didReceive message: WKScriptMessage,
+                                   replyHandler: @escaping @MainActor @Sendable (Any?, String?) -> Void) {
+            guard let raw = message.body as? String else { replyHandler(nil, "expected text"); return }
+            let result = CodeCleaner.clean(raw, mode: .paste)
+            replyHandler(["text": result.text, "notice": result.notice(for: .paste) ?? NSNull()] as [String: Any], nil)
         }
 
         func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) { fail() }

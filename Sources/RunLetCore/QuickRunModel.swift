@@ -15,8 +15,13 @@ public final class QuickRunModel: ObservableObject {
     public typealias Runner = @Sendable (String, TimeInterval?) -> RunSession
 
     @Published public var source = "" {
-        didSet { if source.isEmpty { currentID = nil } }
+        didSet {
+            if source.isEmpty { currentID = nil }
+            if source != oldValue { pasteNotice = nil }
+        }
     }
+    /// "Cleaned pasted code: … ⌘Z to undo." after a paste that was cleaned. Cleared by the next edit.
+    @Published public private(set) var pasteNotice: String?
     @Published public private(set) var chunks: [OutputChunk] = []
     @Published public private(set) var status = ""
     @Published public private(set) var isRunning = false
@@ -46,6 +51,9 @@ public final class QuickRunModel: ObservableObject {
         self.runner = runner
         refreshRecent()
     }
+
+    /// Shows the notice for a paste. Called after the pasted text is in `source`, because changing `source` clears it.
+    public func showPasteNotice(_ notice: String?) { pasteNotice = notice }
 
     public var detected: Language? { LanguageDetector.detect(source) }
 

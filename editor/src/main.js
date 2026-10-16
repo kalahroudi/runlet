@@ -1,5 +1,5 @@
 // RunLet editor: CodeMirror 6 with Python. Talks to Swift through window.webkit.messageHandlers.runlet.
-import { EditorState } from "@codemirror/state";
+import { EditorState, Transaction } from "@codemirror/state";
 import { EditorView, keymap, lineNumbers, highlightActiveLine, drawSelection } from "@codemirror/view";
 import { defaultKeymap, history, historyKeymap, indentWithTab, toggleComment } from "@codemirror/commands";
 import { bracketMatching, indentOnInput, syntaxHighlighting, HighlightStyle } from "@codemirror/language";
@@ -35,13 +35,38 @@ const theme = EditorView.theme({
 
 let applyingFromSwift = false;
 
+// Paste goes to Swift to be cleaned. The original text goes in first and the cleaned text replaces it as a
+// separate undo step, so one undo shows exactly what was pasted.
+function applyPaste(view, raw, reply) {
+  const { from, to } = view.state.selection.main;
+  view.dispatch({ changes: { from, to, insert: raw }, selection: { anchor: from + raw.length }, userEvent: "input.paste", scrollIntoView: true });
+  if (reply && typeof reply.text === "string" && reply.text !== raw) {
+    view.dispatch({
+      changes: { from, to: from + raw.length, insert: reply.text }, selection: { anchor: from + reply.text.length },
+      annotations: Transaction.isolateHistory.of("full"), userEvent: "input.paste", scrollIntoView: true,
+    });
+    post({ type: "pasted", notice: reply.notice ?? null });
+  }
+}
+
+const cleanOnPaste = EditorView.domEventHandlers({
+  paste(event, view) {
+    const raw = event.clipboardData?.getData("text/plain");
+    const handler = window.webkit?.messageHandlers?.paste;
+    if (!raw || !handler) return false;
+    event.preventDefault();
+    handler.postMessage(raw).then((reply) => applyPaste(view, raw, reply), () => applyPaste(view, raw, null));
+    return true;
+  },
+});
+
 const view = new EditorView({
   parent: document.getElementById("editor"),
   state: EditorState.create({
     doc: "",
     extensions: [
       lineNumbers(), history(), drawSelection(), highlightActiveLine(), indentOnInput(), bracketMatching(),
-      python(), syntaxHighlighting(highlight), theme,
+      python(), syntaxHighlighting(highlight), theme, cleanOnPaste,
       keymap.of([{ key: "Mod-/", run: toggleComment }, indentWithTab, ...defaultKeymap, ...historyKeymap]),
       EditorView.updateListener.of((update) => {
         if (update.docChanged && !applyingFromSwift) post({ type: "change", text: update.state.doc.toString() });

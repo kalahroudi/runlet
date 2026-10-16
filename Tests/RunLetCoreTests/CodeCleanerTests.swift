@@ -106,4 +106,16 @@ struct RunCleaningTests {
         #expect(seen.text == "print(1)")
         #expect(model.source == " print(1)")
     }
+
+    @Test func pasteNoticeIsClearedByTheNextEdit() {
+        let dir = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        let model = QuickRunModel(store: SnippetStore(root: dir, useTrash: false), pythonAvailable: true) { _, _ in
+            RunSession(events: AsyncStream { $0.finish() })
+        }
+        model.source = "x = 1"
+        model.showPasteNotice("Cleaned pasted code: indent removed. ⌘Z to undo.")
+        #expect(model.pasteNotice != nil)
+        model.source = "x = 1\ny = 2"
+        #expect(model.pasteNotice == nil)
+    }
 }
