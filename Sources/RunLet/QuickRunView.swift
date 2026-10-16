@@ -192,14 +192,13 @@ struct ConsoleView: View {
         VStack(spacing: 0) {
             if !model.chunks.isEmpty || maxOutputHeight == nil {
                 if maxOutputHeight != nil { divider }
-                ScrollView {
+                StyledScrollView(fade: Color.rlCode, followsEnd: true) {
                     outputText
                         .font(RLFont.mono(12.5))
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .textSelection(.enabled)
                         .padding(.horizontal, 12).padding(.vertical, 8)
                 }
-                .scrollIndicators(.hidden)
                 .frame(maxHeight: maxOutputHeight ?? .infinity)
             }
             if model.isRunning {

@@ -11,6 +11,13 @@
 :root[data-dark="1"] { --active-line: rgba(237,240,245,.05); --selection: rgba(255,107,66,.30);
   --syn-keyword: #F28BD0; --syn-string: #5FDDB0; --syn-number: #F2B063; --syn-comment: #8C97AA; --syn-function: #7DB0FF; --syn-punct: #9AA4B5; }
 html, body, #editor { height: 100%; margin: 0; background: var(--bg); }
+#editor { position: relative; }
+.cm-scroller { scrollbar-width: none; }
+.cm-scroller::-webkit-scrollbar { display: none; }
+#editor::before, #editor::after { content: ""; position: absolute; left: 0; right: 0; height: 16px; pointer-events: none; z-index: 5; opacity: 0; transition: opacity .12s; }
+#editor::before { top: 0; background: linear-gradient(var(--bg), transparent); }
+#editor::after { bottom: 0; background: linear-gradient(transparent, var(--bg)); }
+#editor.fade-top::before, #editor.fade-bottom::after { opacity: 1; }
 </style>
 </head>
 <body>
