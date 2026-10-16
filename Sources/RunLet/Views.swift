@@ -33,13 +33,52 @@ struct PopoverView: View {
 }
 
 struct MainWindowView: View {
+    @ObservedObject private var model = EditorModel.shared
+
     var body: some View {
-        VStack(spacing: 8) {
-            Text("RunLet").font(RLFont.display(40))
-            Text("Your playground will live here.").font(RLFont.body(15)).foregroundStyle(Color.rlMuted)
+        VStack(spacing: 0) {
+            HStack {
+                Text(model.title).font(RLFont.display(18))
+                Spacer()
+                SaveIndicator(state: model.saveState)
+            }
+            .padding(.horizontal, 16).padding(.vertical, 10)
+            Rectangle().fill(Color.rlLine).frame(height: 1)
+            if model.usesFallback {
+                VStack(alignment: .leading, spacing: 0) {
+                    Text("The code editor could not load, so this is a plain text box. Your text still saves.")
+                        .font(RLFont.body(12)).foregroundStyle(Color.rlMuted).padding(10)
+                    TextEditor(text: $model.text).font(RLFont.mono(13))
+                        .scrollContentBackground(.hidden).background(Color.rlCode)
+                }
+            } else {
+                EditorView(text: $model.text, onFailure: { model.usesFallback = true })
+                    .background(Color.rlCode)
+            }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color.rlBackground)
+        .onAppear { model.open() }
+        .onDisappear { model.flush() }
+    }
+}
+
+private struct SaveIndicator: View {
+    let state: Autosaver.State
+
+    var body: some View {
+        Text(label).font(RLFont.body(12)).foregroundStyle(isError ? Color.red : Color.rlMuted)
+    }
+
+    private var isError: Bool { if case .failed = state { true } else { false } }
+
+    private var label: String {
+        switch state {
+        case .idle: ""
+        case .pending: "Saving…"
+        case .saved(let date): "Saved " + date.formatted(date: .omitted, time: .shortened)
+        case .failed(let message): "Could not save: \(message)"
+        }
     }
 }
 
