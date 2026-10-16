@@ -27,5 +27,6 @@ Each line is one spec and one PR. Build in order. Specs 001 to 007 give a workin
 | 021 | Signed downloads and updates | Developer ID signing, notarization, release builds and in-app updates (Sparkle) for people who do not build from source. | 020 |
 | 022 | [Visual style](022-visual-style.md) (done) | Design kit from the mock (colours, fonts, buttons, cards) applied to the popover, main window and Settings. | 001 |
 | 023 | [Native popover](023-native-popover.md) | Menu bar icon with a native popover anchored by an arrow, replacing the plain floating panel. | 001, 022 |
+| 024 | [Interactive input](024-run-input.md) (draft) | Type answers to `input()` while a run is in progress. | 002, 006 |
 
 Specs after 001 are written one at a time, just before they are built, so they reflect what the earlier PRs actually delivered.
