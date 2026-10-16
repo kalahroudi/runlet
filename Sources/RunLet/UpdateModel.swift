@@ -100,7 +100,7 @@ struct UpdateSection: View {
                 Text("Use the Update button in the menu bar popover.").font(RLFont.body(12)).foregroundStyle(Color.rlMuted)
             }
             if !model.log.isEmpty {
-                ScrollView { Text(model.log).font(RLFont.mono(11)).frame(maxWidth: .infinity, alignment: .leading) }
+                ScrollView { Text(model.log).font(RLFont.mono(11)).frame(maxWidth: .infinity, alignment: .leading) }.scrollIndicators(.hidden).noScrollers()
                     .scrollIndicators(.hidden).frame(height: 80)
             }
         }

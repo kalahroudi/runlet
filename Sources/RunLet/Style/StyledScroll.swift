@@ -70,6 +70,7 @@ struct StyledScrollView<Content: View>: View {
         }
         .coordinateSpace(name: space)
         .scrollIndicators(.hidden)
+        .noScrollers()
         if #available(macOS 15, *) {
             scroll.onScrollGeometryChange(for: ScrollState.self) { geo in
                 ScrollState(offset: geo.contentOffset.y + geo.contentInsets.top,
@@ -97,4 +98,53 @@ struct StyledScrollView<Content: View>: View {
             .animation(.easeOut(duration: 0.12), value: visible)
             .allowsHitTesting(false)
     }
+}
+
+/// SwiftUI's `.scrollIndicators(.hidden)` is ignored when macOS is set to always show scroll bars. This turns
+/// the scrollers off on the AppKit scroll view that sits behind (or around) the view it is attached to.
+private struct ScrollerHider: NSViewRepresentable {
+    func makeNSView(context: Context) -> Finder { Finder() }
+    func updateNSView(_ view: Finder, context: Context) { view.hide() }
+
+    final class Finder: NSView {
+        override func viewDidMoveToWindow() {
+            super.viewDidMoveToWindow()
+            hide()
+            for delay in [0.2, 0.8] { DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in self?.hide() } }
+        }
+        override func layout() { super.layout(); hide() }
+
+        func hide() {
+            // Wait a turn so SwiftUI has built its scroll views before we look for them.
+            DispatchQueue.main.async { [weak self] in
+                guard let self, let root = self.window?.contentView else { return }
+                let center = self.convert(NSPoint(x: self.bounds.midX, y: self.bounds.midY), to: nil)
+                var best: NSScrollView?
+                func visit(_ view: NSView) {
+                    if let scroll = view as? NSScrollView {
+                        let frame = scroll.convert(scroll.bounds, to: nil)
+                        if frame.contains(center),
+                           best == nil || frame.width * frame.height < best!.convert(best!.bounds, to: nil).width * best!.convert(best!.bounds, to: nil).height {
+                            best = scroll
+                        }
+                    }
+                    view.subviews.forEach(visit)
+                }
+                visit(root)
+                guard let scroll = best else { return }
+                if scroll.hasVerticalScroller { scroll.hasVerticalScroller = false }
+                if scroll.hasHorizontalScroller { scroll.hasHorizontalScroller = false }
+                // SwiftUI can switch the scrollers back on, so also make them invisible.
+                for scroller in [scroll.verticalScroller, scroll.horizontalScroller] {
+                    scroller?.isHidden = true
+                    scroller?.alphaValue = 0
+                }
+            }
+        }
+    }
+}
+
+extension View {
+    /// No scroll bars, whatever the system setting says.
+    func noScrollers() -> some View { background(ScrollerHider()) }
 }
