@@ -1,6 +1,6 @@
 # Spec 025: Run time limit you control
 
-Status: In progress
+Status: Done
 Depends on: 002, 006, 024
 Size estimate: S (about 250 lines including tests)
 
@@ -31,9 +31,9 @@ Every run is stopped after 10 seconds (spec 002). That protects against runaway 
 - [x] A test shows a run with no limit is still running after a longer wait and ends when stopped.
 - [x] A test shows the clock pauses while a prompt is waiting: a program that prints a prompt and waits longer than the limit is not stopped, and one that keeps computing past the limit is.
 - [x] `RunSummary` text for the time-limit case includes the Settings hint, and existing summary tests are updated.
-- [ ] The setting appears in Settings in light and dark, and changing it affects the next run.
-- [ ] `while True: pass` is stopped by the limit when it is 10 s, and by Stop when it is No limit.
-- [ ] `swift test` and `./scripts/build.sh` pass in CI.
+- [x] The setting appears in Settings in light and dark, and changing it affects the next run.
+- [x] `while True: pass` is stopped by the limit when it is 10 s, and by Stop when it is No limit.
+- [x] `swift test` and `./scripts/build.sh` pass in CI.
 
 ## Risks and open questions
 - Pausing the clock on "output without a newline" is a heuristic. It fits `input("Name: ")`, and misses a bare `input()`. The person can always press Stop. Decided by the product owner: keep the prompt-based version.

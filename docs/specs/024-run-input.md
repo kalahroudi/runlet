@@ -1,6 +1,6 @@
 # Spec 024: Interactive input for runs
 
-Status: In progress
+Status: Done
 Depends on: 002, 006
 Size estimate: S (about 250 lines including tests)
 
@@ -32,9 +32,9 @@ Code that calls `input()` fails today with `EOFError`, because a run has no keyb
 - [x] A test sends input after the program has exited and nothing crashes.
 - [x] A test closes input and a program reading to end of file finishes.
 - [x] Non-interactive runs still get an empty standard input (existing tests unchanged and green).
-- [ ] The sample with two `input()` calls and an `int()` conversion runs to the end in the popover when the answers are typed, and shows both prompts.
-- [ ] Stop and the 10 s limit limit still end a run that is waiting for input.
-- [ ] `swift test` and `./scripts/build.sh` pass in CI.
+- [x] The sample with two `input()` calls and an `int()` conversion runs to the end in the popover when the answers are typed, and shows both prompts.
+- [x] Stop and the 10 s limit limit still end a run that is waiting for input.
+- [x] `swift test` and `./scripts/build.sh` pass in CI.
 
 ## Risks and open questions
 - Decided by the product owner: waiting for input counts toward the 10 s limit for now.

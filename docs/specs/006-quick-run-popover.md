@@ -48,8 +48,8 @@ Rules, checked in this order (a port of the mock): Go (`func … {` or `package 
 
 ## Acceptance criteria
 - [x] Detection returns the expected language for a sample of each of the five, and nil for short or unrecognised text.
-- [ ] Pasting Python shows "Detected Python…" and selects the Python chip. Pasting Go shows the "Only Python runs for now" line and disables Run.
-- [ ] Run (⌘↵) runs the code and streams output, stderr in red, with the status line from spec 002. `while True: pass` is stopped by Stop and by the 10 s limit.
+- [x] Pasting Python shows "Detected Python…" and selects the Python chip. Pasting Go shows the "Only Python runs for now" line and disables Run.
+- [x] Run (⌘↵) runs the code and streams output, stderr in red, with the status line from spec 002. `while True: pass` is stopped by Stop and by the 10 s limit.
 - [x] Every run leaves a snippet on disk. Running again after editing a loaded snippet updates it and does not create a second one.
 - [ ] Recent shows the 4 newest snippets with relative times, and clicking one loads its code.
 - [x] "New" clears the box and the next Run creates a new snippet.
