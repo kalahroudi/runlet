@@ -10,9 +10,9 @@ public struct OutputChunk: Identifiable, Sendable {
 /// State of the quick run popover: the code box, the snippet it belongs to, the output of the last run.
 @MainActor
 public final class QuickRunModel: ObservableObject {
-    nonisolated public static let timeLimit: TimeInterval = 10
     private static let outputLimit = 100_000
-    public typealias Runner = @Sendable (String) -> RunSession
+    /// Starts a run of the source with the given time limit in seconds (`nil` = no limit).
+    public typealias Runner = @Sendable (String, TimeInterval?) -> RunSession
 
     @Published public var source = "" {
         didSet { if source.isEmpty { currentID = nil } }
@@ -26,11 +26,15 @@ public final class QuickRunModel: ObservableObject {
     public let pythonAvailable: Bool
     private let store: SnippetStore
     private let runner: Runner
+    private let timeLimit: () -> TimeInterval?
+    private var limitUsed: TimeInterval?
     private var task: Task<Void, Never>?
     private var shown = 0
     private var session: RunSession?
 
-    public init(store: SnippetStore, pythonAvailable: Bool, runner: @escaping Runner) {
+    public init(store: SnippetStore, pythonAvailable: Bool, timeLimit: @escaping () -> TimeInterval? = { 60 },
+                runner: @escaping Runner) {
+        self.timeLimit = timeLimit
         self.store = store
         self.pythonAvailable = pythonAvailable
         self.runner = runner
@@ -69,7 +73,8 @@ public final class QuickRunModel: ObservableObject {
             isRunning = false
             return
         }
-        let current = runner(source)
+        limitUsed = timeLimit()
+        let current = runner(source, limitUsed)
         session = current
         for await event in current.events { handle(event) }
         session = nil
@@ -104,7 +109,7 @@ public final class QuickRunModel: ObservableObject {
     private func handle(_ event: RunEvent) {
         switch event {
         case .output(let stream, let text): append(text, isError: stream == .stderr)
-        case .finished(let result): status = result.summary(timeLimit: Self.timeLimit)
+        case .finished(let result): status = result.summary(timeLimit: limitUsed)
         }
     }
 

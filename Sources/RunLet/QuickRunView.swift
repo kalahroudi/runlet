@@ -4,10 +4,12 @@ import RunLetCore
 extension QuickRunModel {
     static let shared: QuickRunModel = {
         let interpreter = PythonRunner.findInterpreter()
-        return QuickRunModel(store: SnippetStore(), pythonAvailable: interpreter != nil) { source in
+        return QuickRunModel(
+            store: SnippetStore(), pythonAvailable: interpreter != nil,
+            timeLimit: { TimeLimitChoice(stored: UserDefaults.standard.string(forKey: TimeLimitChoice.defaultsKey)).seconds }
+        ) { source, limit in
             guard let interpreter else { return RunSession(events: AsyncStream { $0.finish() }) }
-            return PythonRunner.start(source: source, interpreter: interpreter,
-                                      timeout: QuickRunModel.timeLimit, interactive: true)
+            return PythonRunner.start(source: source, interpreter: interpreter, timeout: limit, interactive: true)
         }
     }()
 }

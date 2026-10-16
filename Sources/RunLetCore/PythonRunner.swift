@@ -12,12 +12,12 @@ public enum PythonRunner {
             .first { FileManager.default.isExecutableFile(atPath: $0.path) }
     }
 
-    public static func run(source: String, interpreter: URL, timeout: TimeInterval = 10) -> AsyncStream<RunEvent> {
+    public static func run(source: String, interpreter: URL, timeout: TimeInterval? = 10) -> AsyncStream<RunEvent> {
         start(source: source, interpreter: interpreter, timeout: timeout).events
     }
 
     /// Like `run`, but the program can be typed to through the returned session.
-    public static func start(source: String, interpreter: URL, timeout: TimeInterval = 10,
+    public static func start(source: String, interpreter: URL, timeout: TimeInterval? = 10,
                              interactive: Bool = false) -> RunSession {
         let folder = FileManager.default.temporaryDirectory.appendingPathComponent("runlet-\(UUID().uuidString)")
         do {

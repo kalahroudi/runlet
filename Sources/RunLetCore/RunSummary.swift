@@ -2,14 +2,14 @@ import Foundation
 
 extension RunResult {
     /// One line for the status bar, such as "Finished in 38 ms".
-    public func summary(timeLimit: TimeInterval) -> String {
+    public func summary(timeLimit: TimeInterval?) -> String {
         switch outcome {
         case .exited where exitCode == 0:
             return "Finished in \(Self.format(duration))"
         case .exited:
             return "Exited with code \(exitCode ?? -1) in \(Self.format(duration))"
         case .timedOut:
-            return "Stopped after \(Self.format(timeLimit)) (time limit)"
+            return "Stopped after \(Self.format(timeLimit ?? duration)) (time limit). Change it in Settings."
         case .failedToLaunch(let reason):
             return "Could not start: \(reason)"
         }

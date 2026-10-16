@@ -129,11 +129,52 @@ func shell(_ script: String, timeout: TimeInterval = 5) -> AsyncStream<RunEvent>
     }
 }
 
+@Suite struct TimeLimitTests {
+    func session(_ script: String, timeout: TimeInterval?) -> RunSession {
+        ProcessRunner.start(RunRequest(executable: URL(fileURLWithPath: "/bin/sh"),
+                                       arguments: ["-c", script], timeout: timeout, interactive: true))
+    }
+
+    @Test func settingMapsToSeconds() {
+        #expect(TimeLimitChoice(stored: "10").seconds == 10)
+        #expect(TimeLimitChoice(stored: "60").seconds == 60)
+        #expect(TimeLimitChoice(stored: "300").seconds == 300)
+        #expect(TimeLimitChoice(stored: "none").seconds == nil)
+        #expect(TimeLimitChoice(stored: nil).seconds == 60)
+        #expect(TimeLimitChoice(stored: "garbage").seconds == 60)
+    }
+
+    @Test func noLimitKeepsRunningUntilStopped() async throws {
+        let run = session("sleep 30", timeout: nil)
+        let consumer = Task { await collect(run.events) }
+        try await Task.sleep(nanoseconds: 800_000_000)
+        #expect(!consumer.isCancelled)
+        consumer.cancel()
+        let out = await consumer.value
+        #expect(out.result?.outcome != .timedOut)
+    }
+
+    @Test func theClockPausesWhileAPromptIsWaiting() async throws {
+        let run = session("printf 'name? '; read a; echo got:$a", timeout: 0.5)
+        let consumer = Task { await collect(run.events) }
+        try await Task.sleep(nanoseconds: 1_200_000_000)
+        run.send("ada\n")
+        let out = await consumer.value
+        #expect(out.result?.outcome == .exited)
+        #expect(out.stdout == "name? got:ada\n")
+    }
+
+    @Test func aRunThatKeepsComputingIsStopped() async {
+        let out = await collect(session("echo start; sleep 30", timeout: 0.4).events)
+        #expect(out.result?.outcome == .timedOut)
+    }
+}
+
 @Suite struct RunSummaryTests {
     @Test func describesEachOutcome() {
         #expect(RunResult(exitCode: 0, outcome: .exited, duration: 0.038).summary(timeLimit: 10) == "Finished in 38 ms")
         #expect(RunResult(exitCode: 1, outcome: .exited, duration: 1.24).summary(timeLimit: 10) == "Exited with code 1 in 1.2 s")
-        #expect(RunResult(exitCode: 15, outcome: .timedOut, duration: 10).summary(timeLimit: 10) == "Stopped after 10 s (time limit)")
+        #expect(RunResult(exitCode: 15, outcome: .timedOut, duration: 10).summary(timeLimit: 10) == "Stopped after 10 s (time limit). Change it in Settings.")
         #expect(RunResult(exitCode: nil, outcome: .failedToLaunch("no such file"), duration: 0)
             .summary(timeLimit: 10) == "Could not start: no such file")
     }
