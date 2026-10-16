@@ -20,36 +20,20 @@ struct StyledScrollView<Content: View>: View {
     var followsEnd = false
     @ViewBuilder var content: Content
 
+    @State private var state = ScrollState(offset: 0, content: 0, viewport: 0)
     @State private var viewport = 0.0
-    @State private var metrics = ScrollMetrics()
     @State private var follower = ScrollFollower()
     private let space = "styledScroll"
 
-    private var state: ScrollState { ScrollState(offset: metrics.offset, content: metrics.content, viewport: viewport) }
+    private func apply(_ new: ScrollState, _ proxy: ScrollViewProxy) {
+        state = new
+        guard followsEnd else { return }
+        if follower.update(new) { proxy.scrollTo("end", anchor: .bottom) }
+    }
 
     var body: some View {
         ScrollViewReader { proxy in
-            ScrollView {
-                VStack(spacing: 0) {
-                    content
-                    Color.clear.frame(height: 0).id("end")
-                }
-                .background(GeometryReader { geo in
-                    Color.clear.preference(key: ScrollMetricsKey.self, value: ScrollMetrics(
-                        offset: -geo.frame(in: .named(space)).minY, content: geo.size.height))
-                })
-            }
-            .coordinateSpace(name: space)
-            .scrollIndicators(.hidden)
-            .background(GeometryReader { geo in
-                Color.clear.onAppear { viewport = geo.size.height }
-                    .onChange(of: geo.size.height) { _, new in viewport = new }
-            })
-            .onPreferenceChange(ScrollMetricsKey.self) { new in
-                metrics = new
-                guard followsEnd else { return }
-                if follower.update(state) { proxy.scrollTo("end", anchor: .bottom) }
-            }
+            tracked(proxy)
             .overlay(alignment: .top) { edge(visible: state.hiddenAbove, from: .top) }
             .overlay(alignment: .bottom) { edge(visible: state.hiddenBelow, from: .bottom) }
             .overlay(alignment: .bottomTrailing) {
@@ -68,6 +52,40 @@ struct StyledScrollView<Content: View>: View {
                     .padding(8)
                 }
             }
+        }
+    }
+
+    /// The scroll view, reporting where it is scrolled. macOS 15 has an API for it. On macOS 14 the position
+    /// is read from the geometry of the content.
+    @ViewBuilder private func tracked(_ proxy: ScrollViewProxy) -> some View {
+        let scroll = ScrollView {
+            VStack(spacing: 0) {
+                content
+                Color.clear.frame(height: 0).id("end")
+            }
+            .background(GeometryReader { geo in
+                Color.clear.preference(key: ScrollMetricsKey.self, value: ScrollMetrics(
+                    offset: -geo.frame(in: .named(space)).minY, content: geo.size.height))
+            })
+        }
+        .coordinateSpace(name: space)
+        .scrollIndicators(.hidden)
+        if #available(macOS 15, *) {
+            scroll.onScrollGeometryChange(for: ScrollState.self) { geo in
+                ScrollState(offset: geo.contentOffset.y + geo.contentInsets.top,
+                            content: geo.contentSize.height, viewport: geo.containerSize.height)
+            } action: { _, new in
+                apply(new, proxy)
+            }
+        } else {
+            scroll
+                .background(GeometryReader { geo in
+                    Color.clear.onAppear { viewport = geo.size.height }
+                        .onChange(of: geo.size.height) { _, new in viewport = new }
+                })
+                .onPreferenceChange(ScrollMetricsKey.self) { new in
+                    apply(ScrollState(offset: new.offset, content: new.content, viewport: viewport), proxy)
+                }
         }
     }
 
