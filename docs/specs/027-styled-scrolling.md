@@ -1,6 +1,6 @@
 # Spec 027: Styled scrolling
 
-Status: Draft
+Status: In progress
 Depends on: 026
 Size estimate: S (about 250 lines including tests)
 
@@ -26,7 +26,7 @@ System scrollbars look cheap against the mock. Where content scrolls, the app hi
 - [ ] No scrollbar shows in the editor, console, list or popover output, and all still scroll by trackpad, wheel and keyboard.
 - [ ] A fade shows only on an edge with hidden content.
 - [ ] While the console is scrolled up, new output does not move it and "Jump to latest" is shown. Pressing it scrolls to the end and hides it.
-- [ ] The follow-or-pin type has tests (at bottom follows, scrolled up pins, pressing the pill follows again).
+- [x] The follow-or-pin type has tests (at bottom follows, scrolled up pins, pressing the pill follows again).
 - [ ] `swift test` and `./scripts/build.sh` pass in CI.
 
 ## Risks and open questions

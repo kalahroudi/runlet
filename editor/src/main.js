@@ -50,6 +50,17 @@ const view = new EditorView({
   }),
 });
 
+// A fade on an edge that has hidden content.
+const root = document.getElementById("editor");
+const scroller = view.scrollDOM;
+const updateEdges = () => {
+  root.classList.toggle("fade-top", scroller.scrollTop > 4);
+  root.classList.toggle("fade-bottom", scroller.scrollHeight - scroller.clientHeight - scroller.scrollTop > 4);
+};
+scroller.addEventListener("scroll", updateEdges, { passive: true });
+new ResizeObserver(updateEdges).observe(scroller);
+new MutationObserver(updateEdges).observe(view.contentDOM, { childList: true, subtree: true });
+
 window.RunLetEditor = {
   setText(text) {
     applyingFromSwift = true;

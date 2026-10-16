@@ -30,6 +30,6 @@ Each line is one spec and one PR. Build in order. Specs 001 to 007 give a workin
 | 024 | [Interactive input](024-run-input.md) (done) | Type answers to `input()` while a run is in progress. | 002, 006 |
 | 025 | [Run time limit](025-run-time-limit.md) (done) | Choose the run time limit in Settings (default 60 s, or none). Waiting for typed input does not count. | 002, 006, 024 |
 | 026 | [Main window with Run and console](026-main-window-console.md) (in progress) | Snippet list, editor, Run and Stop, and a console with input. | 002, 004, 005, 024, 025 |
-| 027 | [Styled scrolling](027-styled-scrolling.md) (draft) | Hidden scrollbars, edge fades and a "Jump to latest" pill. | 026 |
+| 027 | [Styled scrolling](027-styled-scrolling.md) (in progress) | Hidden scrollbars, edge fades and a "Jump to latest" pill. | 026 |
 
 Specs after 001 are written one at a time, just before they are built, so they reflect what the earlier PRs actually delivered.

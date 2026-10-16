@@ -103,7 +103,7 @@ private struct SnippetList: View {
                     .buttonStyle(.rlIcon).help("New snippet")
             }
             .padding(.leading, 14).padding(.trailing, 6).padding(.vertical, 6)
-            ScrollView {
+            StyledScrollView(fade: Color.rlSurface2) {
                 VStack(spacing: 2) {
                     ForEach(run.all) { snippet in
                         SnippetRow(snippet: snippet, selected: snippet.id == run.currentID,
@@ -112,7 +112,6 @@ private struct SnippetList: View {
                 }
                 .padding(.horizontal, 8)
             }
-            .scrollIndicators(.hidden)
         }
         .frame(maxHeight: .infinity, alignment: .top)
         .background(Color.rlSurface2)
