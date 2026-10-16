@@ -1,6 +1,6 @@
 # Spec 025: Run time limit you control
 
-Status: Draft
+Status: In progress
 Depends on: 002, 006, 024
 Size estimate: S (about 250 lines including tests)
 
@@ -27,14 +27,14 @@ Every run is stopped after 10 seconds (spec 002). That protects against runaway 
 - Stop kills the program as today (terminate, then kill after one second).
 
 ## Acceptance criteria
-- [ ] Tests for the setting type: each stored value maps to the right timeout, `nil` for No limit, and unknown or missing values give 60 seconds.
-- [ ] A test shows a run with no limit is still running after a longer wait and ends when stopped.
-- [ ] A test shows the clock pauses while a prompt is waiting: a program that prints a prompt and waits longer than the limit is not stopped, and one that keeps computing past the limit is.
-- [ ] `RunSummary` text for the time-limit case includes the Settings hint, and existing summary tests are updated.
+- [x] Tests for the setting type: each stored value maps to the right timeout, `nil` for No limit, and unknown or missing values give 60 seconds.
+- [x] A test shows a run with no limit is still running after a longer wait and ends when stopped.
+- [x] A test shows the clock pauses while a prompt is waiting: a program that prints a prompt and waits longer than the limit is not stopped, and one that keeps computing past the limit is.
+- [x] `RunSummary` text for the time-limit case includes the Settings hint, and existing summary tests are updated.
 - [ ] The setting appears in Settings in light and dark, and changing it affects the next run.
 - [ ] `while True: pass` is stopped by the limit when it is 10 s, and by Stop when it is No limit.
 - [ ] `swift test` and `./scripts/build.sh` pass in CI.
 
 ## Risks and open questions
-- Pausing the clock on "output without a newline" is a heuristic. It fits `input("Name: ")`, and misses a bare `input()`. The person can always press Stop. Product owner: accept, or should waiting for input never count at all (clock pauses whenever the input line is shown)?
+- Pausing the clock on "output without a newline" is a heuristic. It fits `input("Name: ")`, and misses a bare `input()`. The person can always press Stop. Decided by the product owner: keep the prompt-based version.
 - A hung program with No limit keeps running until Stop. The popover shows "Running…" with Stop visible, so it is not hidden, but closing the popover does not stop the run. Proposal: leave as is, and revisit if it bites.

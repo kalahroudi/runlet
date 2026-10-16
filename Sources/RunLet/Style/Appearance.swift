@@ -34,3 +34,20 @@ struct AppearanceSection: View {
         }
     }
 }
+
+struct TimeLimitSection: View {
+    @AppStorage(TimeLimitChoice.defaultsKey) private var stored = TimeLimitChoice.oneMinute.rawValue
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            RLSectionTitle("Run time limit")
+            Picker("Run time limit", selection: $stored) {
+                ForEach(TimeLimitChoice.allCases, id: \.rawValue) { Text($0.title).tag($0.rawValue) }
+            }
+            .pickerStyle(.segmented)
+            .labelsHidden()
+            Text("Runs are stopped after this long. Time spent waiting for your typing does not count.")
+                .font(RLFont.body(12)).foregroundStyle(Color.rlMuted)
+        }
+    }
+}

@@ -32,12 +32,13 @@ public struct RunRequest: Sendable {
     public var arguments: [String]
     public var workingDirectory: URL?
     public var environment: [String: String]?
-    public var timeout: TimeInterval
+    /// Seconds a program may run before it is stopped. `nil` means no limit.
+    public var timeout: TimeInterval?
     /// When true the program can be sent input with `RunSession.send`. Otherwise its input is empty.
     public var interactive: Bool
 
     public init(executable: URL, arguments: [String] = [], workingDirectory: URL? = nil,
-                environment: [String: String]? = nil, timeout: TimeInterval = 10, interactive: Bool = false) {
+                environment: [String: String]? = nil, timeout: TimeInterval? = 10, interactive: Bool = false) {
         self.interactive = interactive
         self.executable = executable
         self.arguments = arguments
@@ -80,7 +81,8 @@ public enum ProcessRunner {
         // Writing to a program that has exited must not kill this app.
         signal(SIGPIPE, SIG_IGN)
         let input = request.interactive ? Pipe() : nil
-        let writer = InputWriter(input?.fileHandleForWriting)
+        let clock = RunClock()
+        let writer = InputWriter(input?.fileHandleForWriting, clock: clock)
         let events = AsyncStream<RunEvent> { continuation in
             let process = Process()
             process.executableURL = request.executable
@@ -96,8 +98,9 @@ public enum ProcessRunner {
             let start = Date()
 
             let readers = DispatchGroup()
-            stream(stdout, as: .stdout, into: continuation, group: readers)
-            stream(stderr, as: .stderr, into: continuation, group: readers)
+            let watching = request.interactive ? clock : nil
+            stream(stdout, as: .stdout, into: continuation, group: readers, clock: watching)
+            stream(stderr, as: .stderr, into: continuation, group: readers, clock: watching)
 
             process.terminationHandler = { finished in
                 writer.close()
@@ -129,10 +132,18 @@ public enum ProcessRunner {
 
             try? input?.fileHandleForReading.close()
 
-            DispatchQueue.global().asyncAfter(deadline: .now() + request.timeout) {
-                guard process.isRunning else { return }
-                stop.set(.timedOut)
-                terminate(process)
+            if let timeout = request.timeout {
+                // Polls instead of sleeping once, because the clock pauses while the program waits for typing.
+                DispatchQueue.global().async {
+                    while process.isRunning {
+                        if clock.elapsed() >= timeout {
+                            stop.set(.timedOut)
+                            terminate(process)
+                            return
+                        }
+                        Thread.sleep(forTimeInterval: 0.05)
+                    }
+                }
             }
 
             continuation.onTermination = { reason in
@@ -144,7 +155,8 @@ public enum ProcessRunner {
 
     /// Reads a pipe on its own queue until end of file, in order, and leaves the group when done.
     private static func stream(_ pipe: Pipe, as kind: StreamKind,
-                               into continuation: AsyncStream<RunEvent>.Continuation, group: DispatchGroup) {
+                               into continuation: AsyncStream<RunEvent>.Continuation, group: DispatchGroup,
+                               clock: RunClock?) {
         group.enter()
         DispatchQueue.global().async {
             let handle = pipe.fileHandleForReading
@@ -152,6 +164,7 @@ public enum ProcessRunner {
                 let data = handle.availableData
                 if data.isEmpty { break }
                 continuation.yield(.output(kind, String(decoding: data, as: UTF8.self)))
+                clock?.output(endedWithNewline: data.last == 10)
             }
             group.leave()
         }
@@ -177,12 +190,14 @@ private final class StopReason: @unchecked Sendable {
 /// Writes to a program's input on its own queue so a full pipe never blocks the caller.
 private final class InputWriter: @unchecked Sendable {
     private let handle: FileHandle?
+    private let clock: RunClock
     private let queue = DispatchQueue(label: "runlet.input")
     private var closed = false
 
-    init(_ handle: FileHandle?) { self.handle = handle }
+    init(_ handle: FileHandle?, clock: RunClock) { self.handle = handle; self.clock = clock }
 
     func write(_ text: String) {
+        clock.resume()
         queue.async { [self] in
             guard !closed, let handle else { return }
             try? handle.write(contentsOf: Data(text.utf8))
@@ -190,10 +205,41 @@ private final class InputWriter: @unchecked Sendable {
     }
 
     func close() {
+        clock.resume()
         queue.async { [self] in
             guard !closed, let handle else { return }
             closed = true
             try? handle.close()
         }
+    }
+}
+
+/// Counts how long a program has really been running. It pauses while the program has printed a prompt
+/// (output without a final newline) and is waiting for the person to answer.
+final class RunClock: @unchecked Sendable {
+    private let lock = NSLock()
+    private let start = Date()
+    private var pausedSince: Date?
+    private var pausedTotal: TimeInterval = 0
+
+    func output(endedWithNewline: Bool) {
+        lock.withLock {
+            if endedWithNewline { resumeLocked() } else if pausedSince == nil { pausedSince = Date() }
+        }
+    }
+
+    func resume() { lock.withLock { resumeLocked() } }
+
+    func elapsed() -> TimeInterval {
+        lock.withLock {
+            let now = Date()
+            return now.timeIntervalSince(start) - pausedTotal - (pausedSince.map { now.timeIntervalSince($0) } ?? 0)
+        }
+    }
+
+    private func resumeLocked() {
+        guard let since = pausedSince else { return }
+        pausedTotal += Date().timeIntervalSince(since)
+        pausedSince = nil
     }
 }

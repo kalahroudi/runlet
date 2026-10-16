@@ -51,7 +51,7 @@ import Testing
     func makeModel(python: Bool = true) -> (QuickRunModel, SnippetStore) {
         let root = FileManager.default.temporaryDirectory.appendingPathComponent("runlet-\(UUID().uuidString)")
         let store = SnippetStore(root: root, useTrash: false)
-        let model = QuickRunModel(store: store, pythonAvailable: python) { _ in
+        let model = QuickRunModel(store: store, pythonAvailable: python) { _, _ in
             RunSession(events: AsyncStream { c in
                 c.yield(.output(.stdout, "hi\n"))
                 c.yield(.output(.stderr, "oops\n"))
@@ -116,6 +116,6 @@ import Testing
         for i in 0..<6 { _ = try store.create(source: "print(\(i))  # n") }
         model.load(store.list()[0])
         #expect(store.list().count == 6)
-        #expect(QuickRunModel(store: store, pythonAvailable: true) { _ in RunSession(events: AsyncStream { $0.finish() }) }.recent.count == 4)
+        #expect(QuickRunModel(store: store, pythonAvailable: true) { _, _ in RunSession(events: AsyncStream { $0.finish() }) }.recent.count == 4)
     }
 }
