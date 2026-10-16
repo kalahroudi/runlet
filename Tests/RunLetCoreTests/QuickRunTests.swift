@@ -118,4 +118,57 @@ import Testing
         #expect(store.list().count == 6)
         #expect(QuickRunModel(store: store, pythonAvailable: true) { _, _ in RunSession(events: AsyncStream { $0.finish() }) }.recent.count == 4)
     }
+
+    @Test func autosaveCreatesOnFirstTextAndSkipsUnchangedText() throws {
+        let (model, store) = makeModel()
+        try model.saveCurrent()
+        #expect(store.list().isEmpty)
+        model.source = "print('a')  # a"
+        #expect(model.isDirty)
+        try model.saveCurrent()
+        #expect(store.list().count == 1 && !model.isDirty)
+        let stamp = store.list()[0].modified
+        try model.saveCurrent()
+        #expect(store.list()[0].modified == stamp)
+        model.source = "print('b')  # b"
+        try model.saveCurrent()
+        #expect(store.list().count == 1)
+        #expect(try store.source(of: model.currentID!) == "print('b')  # b")
+    }
+
+    @Test func openingASnippetIsNotAnEdit() throws {
+        let (model, store) = makeModel()
+        let made = try store.create(source: "print(1)  # one")
+        model.select(made)
+        #expect(!model.isDirty && model.currentID == made.id)
+    }
+
+    @Test func deletingTheOpenSnippetClearsTheBox() throws {
+        let (model, store) = makeModel()
+        let made = try store.create(source: "print(1)  # one")
+        model.select(made)
+        model.delete(made)
+        #expect(model.source.isEmpty && model.currentID == nil && store.list().isEmpty && model.all.isEmpty)
+    }
+
+    @Test func switchingSnippetsStopsARunAndKeepsItsOutputOut() async throws {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent("runlet-\(UUID().uuidString)")
+        let store = SnippetStore(root: root, useTrash: false)
+        let model = QuickRunModel(store: store, pythonAvailable: true) { _, _ in
+            RunSession(events: AsyncStream { c in
+                c.yield(.output(.stdout, "working\n"))
+                // never finishes by itself
+                c.onTermination = { _ in }
+            })
+        }
+        let other = try store.create(source: "print(2)  # two")
+        model.source = "print(1)  # one"
+        model.startRun()
+        try await Task.sleep(nanoseconds: 200_000_000)
+        #expect(model.isRunning)
+        model.select(other)
+        #expect(!model.isRunning)
+        try await Task.sleep(nanoseconds: 200_000_000)
+        #expect(model.chunks.isEmpty && model.status.isEmpty && model.source == "print(2)  # two")
+    }
 }

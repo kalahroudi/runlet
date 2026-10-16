@@ -21,6 +21,8 @@ public final class QuickRunModel: ObservableObject {
     @Published public private(set) var status = ""
     @Published public private(set) var isRunning = false
     @Published public private(set) var recent: [Snippet] = []
+    /// Every snippet, newest first. The main window's list.
+    @Published public private(set) var all: [Snippet] = []
     @Published public private(set) var currentID: String?
 
     public let pythonAvailable: Bool
@@ -31,6 +33,10 @@ public final class QuickRunModel: ObservableObject {
     private var task: Task<Void, Never>?
     private var shown = 0
     private var session: RunSession?
+    /// The text as last loaded or saved, so autosave can tell real edits from loading a snippet.
+    private var savedSource = ""
+    /// Bumped when the box switches to another snippet, so a run that was stopped cannot write into the new one.
+    private var generation = 0
 
     public init(store: SnippetStore, pythonAvailable: Bool, timeLimit: @escaping () -> TimeInterval? = { 60 },
                 runner: @escaping Runner) {
@@ -49,6 +55,9 @@ public final class QuickRunModel: ObservableObject {
             && (detected ?? .python) == .python
     }
 
+    /// True when the box holds text that is not on disk yet.
+    public var isDirty: Bool { source != savedSource }
+
     public func startRun() {
         guard canRun, !isRunning else { return }
         isRunning = true
@@ -59,15 +68,11 @@ public final class QuickRunModel: ObservableObject {
 
     /// Saves the box as a snippet (new or updated), then runs it.
     public func performRun() async {
+        let mine = generation
         isRunning = true
         chunks = []; shown = 0; status = ""
         do {
-            if let id = currentID {
-                _ = try store.save(source: source, for: id)
-            } else {
-                currentID = try store.create(source: source).id
-            }
-            refreshRecent()
+            try saveCurrent(force: true)
         } catch {
             status = "Could not save: \(error.localizedDescription)"
             isRunning = false
@@ -76,10 +81,25 @@ public final class QuickRunModel: ObservableObject {
         limitUsed = timeLimit()
         let current = runner(source, limitUsed)
         session = current
-        for await event in current.events { handle(event) }
+        for await event in current.events where mine == generation { handle(event) }
+        guard mine == generation else { return }
         session = nil
         if Task.isCancelled { status = "Stopped" }
         isRunning = false
+    }
+
+    /// Writes the box to its snippet, creating one on the first non-empty save. Does nothing when there is
+    /// nothing new to write, unless `force` is set. Used by Run and by the window's autosave.
+    public func saveCurrent(force: Bool = false) throws {
+        if let id = currentID {
+            guard force || isDirty else { return }
+            _ = try store.save(source: source, for: id)
+        } else {
+            guard !source.isEmpty else { return }
+            currentID = try store.create(source: source).id
+        }
+        savedSource = source
+        refreshRecent()
     }
 
     /// Types a line to the running program and shows it in the output like a terminal would.
@@ -94,17 +114,58 @@ public final class QuickRunModel: ObservableObject {
 
     public func newSnippet() {
         guard !isRunning else { return }
-        source = ""; chunks = []; status = ""; shown = 0
+        clearBox()
     }
 
     public func load(_ snippet: Snippet) {
-        guard !isRunning, let text = try? store.source(of: snippet.id) else { return }
+        guard !isRunning else { return }
+        open(snippet)
+    }
+
+    /// Opens a snippet in the box. A run in progress is stopped first, because its output belongs to the old one.
+    public func select(_ snippet: Snippet) {
+        stopForSwitch()
+        open(snippet)
+    }
+
+    /// Starts an empty snippet. A run in progress is stopped first.
+    public func startNew() {
+        stopForSwitch()
+        clearBox()
+    }
+
+    /// Deletes a snippet. If it is the open one, the box is cleared.
+    public func delete(_ snippet: Snippet) {
+        if snippet.id == currentID { stopForSwitch(); clearBox() }
+        try? store.delete(snippet.id)
+        refreshRecent()
+    }
+
+    private func stopForSwitch() {
+        task?.cancel()
+        generation += 1
+        session = nil
+        isRunning = false
+    }
+
+    private func open(_ snippet: Snippet) {
+        guard let text = try? store.source(of: snippet.id) else { return }
         source = text
         currentID = snippet.id
+        savedSource = text
         chunks = []; status = ""; shown = 0
     }
 
-    private func refreshRecent() { recent = Array(store.list().prefix(4)) }
+    private func clearBox() {
+        source = ""
+        savedSource = ""
+        chunks = []; status = ""; shown = 0
+    }
+
+    private func refreshRecent() {
+        all = store.list()
+        recent = Array(all.prefix(4))
+    }
 
     private func handle(_ event: RunEvent) {
         switch event {

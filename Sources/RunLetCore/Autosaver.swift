@@ -17,13 +17,13 @@ public final class Autosaver: ObservableObject {
 
     private let delay: TimeInterval
     private let schedule: Scheduler
-    private let save: (String) throws -> Void
+    private let save: @MainActor (String) throws -> Void
     private let now: () -> Date
     private var latest: String?
     private var cancelPending: (() -> Void)?
 
     public init(delay: TimeInterval = 0.3, schedule: Scheduler? = nil,
-                now: @escaping () -> Date = Date.init, save: @escaping (String) throws -> Void) {
+                now: @escaping () -> Date = Date.init, save: @escaping @MainActor (String) throws -> Void) {
         self.delay = delay
         self.schedule = schedule ?? Autosaver.realSchedule
         self.now = now

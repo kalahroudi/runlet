@@ -100,40 +100,12 @@ struct QuickRunView: View {
     private var codeCard: some View {
         VStack(spacing: 0) {
             codeBox
-            if !model.chunks.isEmpty {
-                divider
-                ScrollView {
-                    outputText
-                        .font(RLFont.mono(12.5))
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .textSelection(.enabled)
-                        .padding(.horizontal, 12).padding(.vertical, 8)
-                }
-                .scrollIndicators(.hidden)
-                .frame(maxHeight: 110)
-            }
-            if model.isRunning {
-                divider
-                InputLine(model: model)
-            }
-            if model.isRunning || !model.status.isEmpty {
-                divider
-                VStack(alignment: .leading, spacing: 2) {
-                    let ok = model.status.hasPrefix("Finished")
-                    RLStatusLine(text: model.isRunning ? "Running…" : (ok ? "✓ " : "") + model.status,
-                                 isError: !model.isRunning && !ok && model.status.hasPrefix("Could not"),
-                                 isOK: ok)
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.horizontal, 12).padding(.vertical, 8)
-            }
+            ConsoleView(model: model, maxOutputHeight: 110)
         }
         .background(Color.rlCode, in: RoundedRectangle(cornerRadius: 12))
         .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.rlLine))
         .clipShape(RoundedRectangle(cornerRadius: 12))
     }
-
-    private var divider: some View { Rectangle().fill(Color.rlLine).frame(height: 1) }
 
     private var codeBox: some View {
         let lines = min(max(model.source.split(separator: "\n", omittingEmptySubsequences: false).count, 4), 9)
@@ -150,12 +122,6 @@ struct QuickRunView: View {
                         .padding(.horizontal, 12).padding(.vertical, 6).allowsHitTesting(false)
                 }
             }
-    }
-
-    private var outputText: Text {
-        model.chunks.reduce(Text("")) { text, chunk in
-            text + Text(chunk.text).foregroundColor(chunk.isError ? .red : Color.rlInk)
-        }
     }
 
     // MARK: Recent
@@ -194,7 +160,7 @@ private struct RecentRow: View {
 }
 
 /// Where the person types answers while a program is running.
-private struct InputLine: View {
+struct InputLine: View {
     @ObservedObject var model: QuickRunModel
     @State private var text = ""
     @FocusState private var focused: Bool
@@ -213,5 +179,51 @@ private struct InputLine: View {
         }
         .padding(.leading, 12).padding(.trailing, 4).padding(.vertical, 2)
         .onAppear { focused = true }
+    }
+}
+
+/// Output, the input line and the status of the run. Used in the popover card and in the window.
+struct ConsoleView: View {
+    @ObservedObject var model: QuickRunModel
+    /// Popover: the output grows up to this height. Window: nil, the output fills the space.
+    var maxOutputHeight: CGFloat?
+
+    var body: some View {
+        VStack(spacing: 0) {
+            if !model.chunks.isEmpty || maxOutputHeight == nil {
+                if maxOutputHeight != nil { divider }
+                ScrollView {
+                    outputText
+                        .font(RLFont.mono(12.5))
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .textSelection(.enabled)
+                        .padding(.horizontal, 12).padding(.vertical, 8)
+                }
+                .scrollIndicators(.hidden)
+                .frame(maxHeight: maxOutputHeight ?? .infinity)
+            }
+            if model.isRunning {
+                divider
+                InputLine(model: model)
+            }
+            if model.isRunning || !model.status.isEmpty {
+                divider
+                let ok = model.status.hasPrefix("Finished")
+                RLStatusLine(text: model.isRunning ? "Running…" : (ok ? "✓ " : "") + model.status,
+                             isError: !model.isRunning && !ok && model.status.hasPrefix("Could not"),
+                             isOK: ok)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, 12).padding(.vertical, 8)
+            }
+        }
+        .frame(maxHeight: maxOutputHeight == nil ? .infinity : nil, alignment: .top)
+    }
+
+    private var divider: some View { Rectangle().fill(Color.rlLine).frame(height: 1) }
+
+    private var outputText: Text {
+        model.chunks.reduce(Text("")) { text, chunk in
+            text + Text(chunk.text).foregroundColor(chunk.isError ? .red : Color.rlInk)
+        }
     }
 }
