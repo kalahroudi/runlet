@@ -1,6 +1,6 @@
 # Spec 006: Quick run popover
 
-Status: Draft
+Status: In progress
 Depends on: 002, 004, 022
 Size estimate: M (about 450 lines including tests)
 
@@ -44,14 +44,14 @@ public enum LanguageDetector { public static func detect(_ source: String) -> La
 Rules, checked in this order (a port of the mock): Go (`func … {` or `package main`), Rust (`fn … {` or `let mut`), TypeScript (`: string`, `: number` or `interface`), JavaScript (`const`, `=>` or `console.log`), Python (`def`, `import`, `print(`). Text under 10 characters returns nil. First match wins.
 
 ## Acceptance criteria
-- [ ] Detection returns the expected language for a sample of each of the five, and nil for short or unrecognised text.
+- [x] Detection returns the expected language for a sample of each of the five, and nil for short or unrecognised text.
 - [ ] Pasting Python shows "Detected Python…" and selects the Python chip. Pasting Go shows the "Only Python runs for now" line and disables Run.
 - [ ] Run (⌘↵) runs the code and streams output, stderr in red, with the status line from spec 002. `while True: pass` is stopped by Stop and by the 10 s limit.
-- [ ] Every run leaves a snippet on disk. Running again after editing a loaded snippet updates it and does not create a second one.
+- [x] Every run leaves a snippet on disk. Running again after editing a loaded snippet updates it and does not create a second one.
 - [ ] Recent shows the 4 newest snippets with relative times, and clicking one loads its code.
-- [ ] "New" clears the box and the next Run creates a new snippet.
+- [x] "New" clears the box and the next Run creates a new snippet.
 - [ ] Without a Python 3 on the Mac, the existing message is shown and Run is disabled.
-- [ ] The scratch box and `ScratchRunner` no longer exist.
+- [x] The scratch box and `ScratchRunner` no longer exist.
 - [ ] The popover looks like the mock in light and dark, with a side-by-side screenshot in the PR, and the product owner confirms it.
 - [ ] `swift test` and `./scripts/build.sh` pass in CI.
 
