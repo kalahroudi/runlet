@@ -23,13 +23,16 @@ This is the first screen that looks like the product. After this spec a person c
 - Managed Python (spec 003). A Python 3 found on the Mac is still used, with the same missing-Python message as today.
 
 ## Behavior
-### Layout, top to bottom
-1. Header row: the code box (3 to 8 lines, grows to a limit, then scrolls without a visible scrollbar), and a primary **▶ Run** button (⌘↵). While running, it becomes **Stop**.
-2. Language row: chips for Python, JavaScript, TypeScript, Go, Rust. The detected one is selected. Only Python can run; the others carry a "soon" hint and are not clickable.
-3. Detection notice, one line, in the ok colour: "Detected Python from what you pasted". When another language is detected: "Looks like Go. Only Python runs for now." and Run is disabled. Nothing is shown for an empty box or when nothing is recognised, and Run then assumes Python.
-4. Output area with the status line from spec 002 (`Finished in 38 ms` and so on). stderr in red.
-5. **Recent**: the 4 newest snippets (title, language dot, relative time such as "2h ago" or "Yesterday"). Clicking one loads it into the code box, ready to edit and run. The box then belongs to that snippet.
-6. Footer strip: the version and **Open in window ↗**.
+### Layout, top to bottom (follows the mock)
+1. Header row: a **Python** chip (the default, selected), the detected language chip when it is not Python, a **More ▾** menu holding every other runtime (shown as "soon", not clickable), a New icon when the box has text, and the primary **▶ Run** button (⌘↵). While running it becomes **Stop**.
+2. Detection line, one line, in the ok colour: "✓ Detected Python from what you pasted". When another language is detected: "Looks like Go. Only Python runs for now." and Run is disabled. Nothing is shown for an empty box or when nothing is recognised, and Run then assumes Python.
+3. One code card: the code box (4 to 9 lines, grows, then scrolls without a visible scrollbar), then the output (stderr in red) and the status line (`✓ Finished in 38 ms`) inside the same card.
+4. **Recent**: the 4 newest snippets (language dot, title, relative time). Clicking one loads it into the code box.
+5. Footer strip: the version on the left, and icon-only buttons on the right: Open in window, Settings (gear) and Quit (power), each with a tooltip. No text buttons.
+
+### Keyboard and input
+- The app installs an Edit menu so ⌘V, ⌘C, ⌘X, ⌘A and ⌘Z work in the code box. A menu bar app has none by default.
+- Runs have no keyboard input yet. Code that calls `input()` fails with `EOFError`, and the status area says so plainly. Real input (a stdin field) is a later spec.
 
 ### Running and saving
 - Run saves first, then runs. If the box belongs to a snippet, that snippet is updated. Otherwise a new one is created, titled from the first non-empty line.

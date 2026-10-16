@@ -44,6 +44,11 @@ public final class QuickRunModel: ObservableObject {
             && (detected ?? .python) == .python
     }
 
+    /// The code called `input()`, but runs have no keyboard input yet, so Python hit end of input.
+    public var waitedForInput: Bool {
+        !isRunning && source.contains("input(") && chunks.contains { $0.isError && $0.text.contains("EOFError") }
+    }
+
     public func startRun() {
         guard canRun, !isRunning else { return }
         isRunning = true

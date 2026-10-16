@@ -16,6 +16,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         // Menu bar only until a window is open. Info.plist sets the same for the bundled app.
         RLFont.load()
+        MainMenu.install()
         Appearance.apply()
         NSApp.setActivationPolicy(.accessory)
         StatusBarController.shared.install()

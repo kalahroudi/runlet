@@ -38,6 +38,26 @@ extension ButtonStyle where Self == RLButtonStyle {
     static var rlSmallPrimary: RLButtonStyle { RLButtonStyle(primary: true, small: true) }
 }
 
+/// Square icon-only button for toolbars and footers.
+struct RLIconButtonStyle: ButtonStyle {
+    @State private var hovering = false
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.system(size: 13, weight: .medium))
+            .foregroundStyle(Color.rlMuted)
+            .frame(width: 28, height: 28)
+            .background(hovering || configuration.isPressed ? Color.rlLine.opacity(0.6) : .clear,
+                        in: RoundedRectangle(cornerRadius: 8))
+            .contentShape(RoundedRectangle(cornerRadius: 8))
+            .onHover { hovering = $0 }
+    }
+}
+
+extension ButtonStyle where Self == RLIconButtonStyle {
+    static var rlIcon: RLIconButtonStyle { RLIconButtonStyle() }
+}
+
 struct RLCard<Content: View>: View {
     var padding: CGFloat = 12
     @ViewBuilder var content: Content
@@ -53,9 +73,13 @@ struct RLCard<Content: View>: View {
 struct RLChip: View {
     let text: String
     var selected = false
+    var dot: Color?
 
     var body: some View {
-        Text(text)
+        HStack(spacing: 6) {
+            if let dot { Circle().fill(dot).frame(width: 8, height: 8) }
+            Text(text)
+        }
             .font(RLFont.body(12, .semibold))
             .padding(.horizontal, 10).padding(.vertical, 4)
             .foregroundStyle(selected ? Color.rlBackground : Color.rlInk)
