@@ -9,7 +9,7 @@ Each line is one spec and one PR. Build in order. Specs 001 to 007 give a workin
 | 003 | Managed Python | Download and cache `uv` and Python 3.13. Create a fresh environment per snippet. | 002 |
 | 004 | [Snippet store](004-snippet-store.md) (done) | Save snippets as files on disk with metadata. List, open, rename, delete. | 001 |
 | 005 | [Editor and console](005-editor-console.md) (draft) | Window with a web-view editor (CodeMirror), Run button, console output. Scrolling areas hide the system scrollbar and use a styled, minimal scroll affordance (editor, console). | 002, 004 |
-| 006 | [Quick run popover](006-quick-run-popover.md) (draft) | Paste into the menu bar popover, detect language, run, see output. | 002, 004 |
+| 006 | [Quick run popover](006-quick-run-popover.md) (in progress) | Paste into the menu bar popover, detect language, run, see output. | 002, 004 |
 | 007 | Missing packages (Python) | Detect imports, show the install bar, install on confirm, warn on unfamiliar names. | 003, 005 |
 | 008 | Sandbox | Run snippets with network and file access off. Per-snippet toggles. | 002 |
 | 009 | Preview pane and inputs | HTML or SVG preview in a web view. Sliders for numbers found in code. | 005 |

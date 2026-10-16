@@ -1,4 +1,5 @@
 import SwiftUI
+import RunLetCore
 
 struct PopoverView: View {
     var body: some View {
@@ -9,7 +10,7 @@ struct PopoverView: View {
                     Text("Quick code, anywhere.").font(RLFont.body(13)).foregroundStyle(Color.rlMuted)
                 }
                 UpdateBanner()
-                RLCard { ScratchRunView() }
+                RLCard { QuickRunView() }
             }
             .padding(14)
 
@@ -18,6 +19,7 @@ struct PopoverView: View {
                 Button("Settings…") { StatusBarController.shared.close(); AppActivation.openSettings() }
                     .buttonStyle(.rlSmall).keyboardShortcut(",")
                 Spacer()
+                Text(String(UpdateModel.shared.installedCommit.prefix(7))).font(RLFont.mono(11)).foregroundStyle(Color.rlMuted)
                 Button("Quit") { StatusBarController.shared.close(); NSApplication.shared.terminate(nil) }
                     .buttonStyle(.rlSmall).keyboardShortcut("q")
             }
