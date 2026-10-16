@@ -113,6 +113,7 @@ struct QuickRunView: View {
             .font(RLFont.mono(12.5))
             .scrollContentBackground(.hidden)
             .scrollIndicators(.hidden)
+            .noScrollers()
             .padding(.horizontal, 7).padding(.vertical, 6)
             .frame(height: CGFloat(lines) * 19 + 12)
             .overlay(alignment: .topLeading) {

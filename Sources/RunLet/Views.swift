@@ -82,7 +82,7 @@ struct MainWindowView: View {
                 Text("The code editor could not load, so this is a plain text box. Your text still saves.")
                     .font(RLFont.body(12)).foregroundStyle(Color.rlMuted).padding(10)
                 TextEditor(text: $run.source).font(RLFont.mono(13))
-                    .scrollContentBackground(.hidden).background(Color.rlCode)
+                    .scrollContentBackground(.hidden).noScrollers().background(Color.rlCode)
             }
         } else {
             EditorView(text: $run.source, onFailure: { model.usesFallback = true })
