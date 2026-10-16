@@ -34,32 +34,118 @@ struct PopoverView: View {
 
 struct MainWindowView: View {
     @ObservedObject private var model = EditorModel.shared
+    @ObservedObject private var run = QuickRunModel.shared
 
     var body: some View {
-        VStack(spacing: 0) {
-            HStack {
-                Text(model.title).font(RLFont.display(18))
-                Spacer()
-                SaveIndicator(state: model.saveState)
-            }
-            .padding(.horizontal, 16).padding(.vertical, 10)
-            Rectangle().fill(Color.rlLine).frame(height: 1)
-            if model.usesFallback {
-                VStack(alignment: .leading, spacing: 0) {
-                    Text("The code editor could not load, so this is a plain text box. Your text still saves.")
-                        .font(RLFont.body(12)).foregroundStyle(Color.rlMuted).padding(10)
-                    TextEditor(text: $model.text).font(RLFont.mono(13))
-                        .scrollContentBackground(.hidden).background(Color.rlCode)
+        HSplitView {
+            SnippetList(run: run)
+                .frame(minWidth: 180, idealWidth: 220, maxWidth: 320)
+            VStack(spacing: 0) {
+                toolbar
+                Rectangle().fill(Color.rlLine).frame(height: 1)
+                VSplitView {
+                    editor.frame(minHeight: 160)
+                    ConsoleView(model: run, maxOutputHeight: nil)
+                        .background(Color.rlCode)
+                        .frame(minHeight: 100, idealHeight: 180)
                 }
-            } else {
-                EditorView(text: $model.text, onFailure: { model.usesFallback = true })
-                    .background(Color.rlCode)
             }
+            .frame(minWidth: 380)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color.rlBackground)
-        .onAppear { model.open() }
-        .onDisappear { model.flush() }
+        .onAppear { model.openIfEmpty() }
+        .onChange(of: run.source) { _, _ in model.textChanged() }
+    }
+
+    private var toolbar: some View {
+        HStack(spacing: 10) {
+            Text(run.all.first { $0.id == run.currentID }?.title ?? "New snippet")
+                .font(RLFont.display(18)).lineLimit(1)
+            Spacer()
+            SaveIndicator(state: model.saveState)
+            if run.isRunning {
+                Button("Stop", action: run.stop).buttonStyle(.rlSmall)
+            } else {
+                Button("▶ Run", action: run.startRun)
+                    .keyboardShortcut(.return, modifiers: .command)
+                    .buttonStyle(.rlSmallPrimary)
+                    .disabled(!run.canRun)
+            }
+        }
+        .padding(.horizontal, 16).padding(.vertical, 10)
+    }
+
+    @ViewBuilder private var editor: some View {
+        if model.usesFallback {
+            VStack(alignment: .leading, spacing: 0) {
+                Text("The code editor could not load, so this is a plain text box. Your text still saves.")
+                    .font(RLFont.body(12)).foregroundStyle(Color.rlMuted).padding(10)
+                TextEditor(text: $run.source).font(RLFont.mono(13))
+                    .scrollContentBackground(.hidden).background(Color.rlCode)
+            }
+        } else {
+            EditorView(text: $run.source, onFailure: { model.usesFallback = true })
+                .background(Color.rlCode)
+        }
+    }
+}
+
+private struct SnippetList: View {
+    @ObservedObject var run: QuickRunModel
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            HStack {
+                RLSectionTitle("Snippets")
+                Spacer()
+                Button { run.startNew() } label: { Image(systemName: "plus") }
+                    .buttonStyle(.rlIcon).help("New snippet")
+            }
+            .padding(.leading, 14).padding(.trailing, 6).padding(.vertical, 6)
+            ScrollView {
+                VStack(spacing: 2) {
+                    ForEach(run.all) { snippet in
+                        SnippetRow(snippet: snippet, selected: snippet.id == run.currentID,
+                                   open: { run.select(snippet) }, delete: { run.delete(snippet) })
+                    }
+                }
+                .padding(.horizontal, 8)
+            }
+            .scrollIndicators(.hidden)
+        }
+        .frame(maxHeight: .infinity, alignment: .top)
+        .background(Color.rlSurface2)
+    }
+}
+
+private struct SnippetRow: View {
+    let snippet: Snippet
+    let selected: Bool
+    let open: () -> Void
+    let delete: () -> Void
+    @State private var hovering = false
+
+    var body: some View {
+        HStack(spacing: 8) {
+            Circle().fill(Language.python.dotColor).frame(width: 8, height: 8)
+            VStack(alignment: .leading, spacing: 1) {
+                Text(snippet.title).font(RLFont.body(13, .medium)).foregroundStyle(Color.rlInk).lineLimit(1)
+                Text(RelativeTime.text(for: snippet.modified)).font(RLFont.body(11.5)).foregroundStyle(Color.rlMuted)
+            }
+            Spacer(minLength: 4)
+            if hovering {
+                Button(action: delete) { Image(systemName: "trash") }
+                    .buttonStyle(.rlIcon).help("Move to Trash")
+            }
+        }
+        .padding(.horizontal, 8).padding(.vertical, 5)
+        .background(selected ? Color.rlAccentSoft : (hovering ? Color.rlLine.opacity(0.5) : .clear),
+                    in: RoundedRectangle(cornerRadius: 9))
+        .contentShape(RoundedRectangle(cornerRadius: 9))
+        .onTapGesture(perform: open)
+        .onHover { hovering = $0 }
+        .contextMenu { Button("Move to Trash", action: delete) }
     }
 }
 

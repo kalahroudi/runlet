@@ -17,6 +17,7 @@ final class MainWindow: NSObject, ManagedWindow, NSWindowDelegate {
         window.isReleasedWhenClosed = false
         window.contentView = NSHostingView(rootView: MainWindowView())
         window.center()
+        window.setFrameAutosaveName("RunLetMainWindow")
         window.delegate = self
     }
 
@@ -27,6 +28,7 @@ final class MainWindow: NSObject, ManagedWindow, NSWindowDelegate {
 
     func windowWillClose(_ notification: Notification) {
         isClosed = true
+        MainActor.assumeIsolated { EditorModel.shared.windowClosed() }
     }
 }
 
