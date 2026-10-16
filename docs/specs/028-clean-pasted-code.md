@@ -1,6 +1,6 @@
 # Spec 028: Clean pasted code
 
-Status: Draft
+Status: In progress
 Depends on: 005, 006, 026
 Size estimate: M (about 450 lines including tests)
 
@@ -19,9 +19,9 @@ Most code arrives by copy and paste, from chats, web pages, documents and termin
   4. **Odd characters**: byte order mark, zero-width characters, and non-breaking or other Unicode spaces become normal spaces or nothing. Windows line endings become `\n`.
   5. **Mixed tabs and spaces**: when lines start with both, leading tabs become 4 spaces. Consistent tabs are left alone.
   6. **Curly quotes**: `“ ” ‘ ’` used as quotes outside strings and comments become straight quotes. Curly quotes inside a string or comment are text, and stay.
-- Paste handling: the quick run popover box and the editor clean text as it is pasted. Cleaning replaces the pasted text, so ⌘Z undoes it and gives back exactly what was pasted.
+- Paste handling (the popover box and the editor intercepting paste, with ⌘Z) moves to Spec 029, as the open questions below allowed. This spec delivers the cleaner with both modes and run handling.
 - Run handling: before every run the "run" mode is applied to a copy. The box and the saved snippet are not changed by it.
-- A one-line notice under the code: "Cleaned pasted code: removed indent, markdown fence. ⌘Z to undo." for a paste, and "Ran with indent removed." for a run. It disappears on the next edit.
+- A notice: "Ran with indent removed." appended to the run status line, gone on the next edit. The paste notice text is produced by the cleaner and shown by Spec 029.
 
 ## Non-goals
 - Reformatting style (line length, quotes, spacing, imports). That needs a formatter such as ruff, which arrives with managed Python (spec 003) and is a later spec.
@@ -39,11 +39,11 @@ Most code arrives by copy and paste, from chats, web pages, documents and termin
 - Cleaning is Python-aware only through these rules. It does not parse the code, except for a small scanner that tracks strings and comments for the curly quote rule.
 
 ## Acceptance criteria
-- [ ] Tests for each cleanup: indented block, indented first line only, Markdown fence with and without a language, `>>>` and `...` transcript with output lines, BOM, zero-width and non-breaking spaces, CRLF, mixed tabs and spaces, consistent tabs untouched, curly quotes used as quotes versus inside a string or comment.
-- [ ] Tests that clean text is unchanged (same string, no changes listed), and that cleaning twice gives the same result.
-- [ ] Tests that "run" mode keeps the number of lines, and "paste" mode may drop fence and prompt lines.
-- [ ] Pasting an indented block, a fenced block and a `>>>` transcript into the popover and into the editor yields code that runs, with the notice shown, and ⌘Z restores the original paste.
-- [ ] Typing a leading space and pressing Run runs, shows "Ran with indent removed.", and leaves the box as typed.
+- [x] Tests for each cleanup: indented block, indented first line only, Markdown fence with and without a language, `>>>` and `...` transcript with output lines, BOM, zero-width and non-breaking spaces, CRLF, mixed tabs and spaces, consistent tabs untouched, curly quotes used as quotes versus inside a string or comment.
+- [x] Tests that clean text is unchanged (same string, no changes listed), and that cleaning twice gives the same result.
+- [x] Tests that "run" mode keeps the number of lines, and "paste" mode may drop fence and prompt lines.
+- [ ] (Spec 029) Pasting an indented block, a fenced block and a `>>>` transcript into the popover and into the editor yields code that runs, with the notice shown, and ⌘Z restores the original paste.
+- [x] Typing a leading space and pressing Run runs, shows "Ran with indent removed." in the status line, and leaves the box as typed.
 - [ ] `for i in range(200): print(i)` with a leading space runs.
 - [ ] `swift test` and `./scripts/build.sh` pass in CI.
 

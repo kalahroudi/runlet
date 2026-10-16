@@ -15,8 +15,13 @@ public final class QuickRunModel: ObservableObject {
     public typealias Runner = @Sendable (String, TimeInterval?) -> RunSession
 
     @Published public var source = "" {
-        didSet { if source.isEmpty { currentID = nil } }
+        didSet {
+            if source.isEmpty { currentID = nil }
+            if source != oldValue { runNotice = nil }
+        }
     }
+    /// "Ran with indent removed." after a run that cleaned the code. Cleared on the next edit.
+    @Published public private(set) var runNotice: String?
     @Published public private(set) var chunks: [OutputChunk] = []
     @Published public private(set) var status = ""
     @Published public private(set) var isRunning = false
@@ -79,7 +84,9 @@ public final class QuickRunModel: ObservableObject {
             return
         }
         limitUsed = timeLimit()
-        let current = runner(source, limitUsed)
+        let cleaned = CodeCleaner.clean(source, mode: .run)
+        runNotice = cleaned.notice(for: .run)
+        let current = runner(cleaned.text, limitUsed)
         session = current
         for await event in current.events where mine == generation { handle(event) }
         guard mine == generation else { return }
