@@ -36,6 +36,7 @@ swiftc -sdk "$SDK" -target "$TARGET" -O -parse-as-library -module-name RunLet \
 cp Resources/Info.plist "$APP/Contents/Info.plist"
 cp Resources/AppIcon.icns "$APP/Contents/Resources/AppIcon.icns"
 mkdir -p "$APP/Contents/Resources/Fonts"; cp Resources/Fonts/*.ttf "$APP/Contents/Resources/Fonts/"
+mkdir -p "$APP/Contents/Resources/editor"; cp Resources/editor/* "$APP/Contents/Resources/editor/"
 /usr/libexec/PlistBuddy -c "Add :RunLetCommit string $(git rev-parse HEAD 2>/dev/null || echo unknown)" "$APP/Contents/Info.plist"
 codesign --force --sign - "$APP" >/dev/null
 echo "Built $APP"

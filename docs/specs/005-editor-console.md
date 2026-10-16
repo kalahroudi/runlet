@@ -1,6 +1,6 @@
 # Spec 005: Code editor
 
-Status: Draft
+Status: In progress
 Depends on: 004
 Size estimate: M (about 400 hand-written lines including tests, excluding the vendored editor bundle)
 
@@ -32,11 +32,11 @@ Everything after the quick run popover needs a real code editor: highlighting, l
 ## Acceptance criteria
 - [ ] The editor shows Python with highlighting and line numbers, and matches the app's light or dark appearance.
 - [ ] Typing saves the snippet within about 300 ms of the last key, and reopening the app shows the edit.
-- [ ] The debouncer has tests: many changes in a burst cause one save, a final flush saves at once, and a save error is reported.
+- [x] The debouncer has tests: many changes in a burst cause one save, a final flush saves at once, and a save error is reported.
 - [ ] `EditorView.text` can be set from Swift without echoing `onChange`, and ⌘/ toggles comments.
 - [ ] Changing Appearance in Settings changes the open editor's theme.
 - [ ] If the bundle is missing, the fallback text box appears and text still saves.
-- [ ] `scripts/build-editor.sh` reproduces the committed bundle (documented in the script header), and the app builds with `./scripts/build.sh` on a machine without npm.
+- [x] `scripts/build-editor.sh` reproduces the committed bundle (documented in the script header), and the app builds with `./scripts/build.sh` on a machine without npm.
 - [ ] `swift test` and `./scripts/build.sh` pass in CI.
 
 ## Test plan
