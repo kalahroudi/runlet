@@ -32,5 +32,6 @@ Each line is one spec and one PR. Build in order. Specs 001 to 007 give a workin
 | 026 | [Main window with Run and console](026-main-window-console.md) (done) | Snippet list, editor, Run and Stop, and a console with input. | 002, 004, 005, 024, 025 |
 | 027 | [Styled scrolling](027-styled-scrolling.md) (done) | Hidden scrollbars, edge fades and a "Jump to latest" pill. | 026 |
 | 028 | [Clean pasted code](028-clean-pasted-code.md) (done) | The code cleaner (indent, Markdown fences, `>>>` prompts, tabs, curly quotes, odd spaces) and cleaning before every run. Paste interception follows in 029. | 005, 006, 026 |
+| 029 | [Clean on paste](029-clean-on-paste.md) (draft) | Paste in the popover and editor goes through the cleaner, with a notice and ⌘Z back to the original. | 028 |
 
 Specs after 001 are written one at a time, just before they are built, so they reflect what the earlier PRs actually delivered.
