@@ -1,6 +1,6 @@
 # Spec 027: Styled scrolling
 
-Status: In progress
+Status: Done
 Depends on: 026
 Size estimate: S (about 250 lines including tests)
 
@@ -23,11 +23,11 @@ System scrollbars look cheap against the mock. Where content scrolls, the app hi
 - The editor's scroller is hidden through its theme, the other areas through SwiftUI.
 
 ## Acceptance criteria
-- [ ] No scrollbar shows in the editor, console, list or popover output, and all still scroll by trackpad, wheel and keyboard.
-- [ ] A fade shows only on an edge with hidden content.
-- [ ] While the console is scrolled up, new output does not move it and "Jump to latest" is shown. Pressing it scrolls to the end and hides it.
+- [x] No scrollbar shows in the editor, console, list or popover output, and all still scroll by trackpad, wheel and keyboard.
+- [x] A fade shows only on an edge with hidden content.
+- [x] While the console is scrolled up, new output does not move it and "Jump to latest" is shown. Pressing it scrolls to the end and hides it.
 - [x] The follow-or-pin type has tests (at bottom follows, scrolled up pins, pressing the pill follows again).
-- [ ] `swift test` and `./scripts/build.sh` pass in CI.
+- [x] `swift test` and `./scripts/build.sh` pass in CI.
 
 ## Risks and open questions
 - Hidden scrollbars hurt discoverability for mouse users. The fade and keyboard support are the mitigation. Revisit if people miss it.

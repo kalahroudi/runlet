@@ -1,6 +1,6 @@
 # Spec 026: Main window with Run and console
 
-Status: In progress
+Status: Done
 Depends on: 002, 004, 005, 024, 025
 Size estimate: M (about 400 lines including tests)
 
@@ -26,13 +26,13 @@ After this spec the full window is a working playground: a list of snippets, the
 - The popover and the window share one box, snippet list and run (`QuickRunModel.shared`). Opening the window shows the snippet the popover has open, a run started in either shows in both, and there is nothing to keep in sync.
 
 ## Acceptance criteria
-- [ ] The window shows the snippet list, editor, console and toolbar, in light and dark, matching the mock layout.
-- [ ] Run streams output, stderr in red, status line as in the popover, and Stop and the time limit setting still end a run.
-- [ ] A program that calls `input()` can be answered in the console.
-- [ ] Switching snippets or closing the window while running stops the program.
-- [ ] New, Delete and selecting a snippet work, and the list updates when the popover saves a snippet.
-- [ ] "Open in window" from the popover opens the current snippet.
-- [ ] `swift test` and `./scripts/build.sh` pass in CI.
+- [x] The window shows the snippet list, editor, console and toolbar, in light and dark, matching the mock layout.
+- [x] Run streams output, stderr in red, status line as in the popover, and Stop and the time limit setting still end a run.
+- [x] A program that calls `input()` can be answered in the console.
+- [x] Switching snippets or closing the window while running stops the program.
+- [x] New, Delete and selecting a snippet work, and the list updates when the popover saves a snippet.
+- [x] "Open in window" from the popover opens the current snippet.
+- [x] `swift test` and `./scripts/build.sh` pass in CI.
 
 ## Test plan
 - Tests for the shared run model changes (selection, switching while running). Manual checks for layout and the run behavior, listed in the PR.

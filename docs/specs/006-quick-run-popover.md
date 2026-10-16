@@ -1,6 +1,6 @@
 # Spec 006: Quick run popover
 
-Status: In progress
+Status: Done
 Depends on: 002, 004, 022
 Size estimate: M (about 450 lines including tests)
 
@@ -51,12 +51,12 @@ Rules, checked in this order (a port of the mock): Go (`func … {` or `package 
 - [x] Pasting Python shows "Detected Python…" and selects the Python chip. Pasting Go shows the "Only Python runs for now" line and disables Run.
 - [x] Run (⌘↵) runs the code and streams output, stderr in red, with the status line from spec 002. `while True: pass` is stopped by Stop and by the 10 s limit.
 - [x] Every run leaves a snippet on disk. Running again after editing a loaded snippet updates it and does not create a second one.
-- [ ] Recent shows the 4 newest snippets with relative times, and clicking one loads its code.
+- [x] Recent shows the 4 newest snippets with relative times, and clicking one loads its code.
 - [x] "New" clears the box and the next Run creates a new snippet.
-- [ ] Without a Python 3 on the Mac, the existing message is shown and Run is disabled.
+- [x] Without a Python 3 on the Mac, the existing message is shown and Run is disabled.
 - [x] The scratch box and `ScratchRunner` no longer exist.
-- [ ] The popover looks like the mock in light and dark, with a side-by-side screenshot in the PR, and the product owner confirms it.
-- [ ] `swift test` and `./scripts/build.sh` pass in CI.
+- [x] The popover looks like the mock in light and dark, with a side-by-side screenshot in the PR, and the product owner confirms it.
+- [x] `swift test` and `./scripts/build.sh` pass in CI.
 
 ## Test plan
 - Swift Testing tests for `LanguageDetector` (each language, order of precedence, short text), for relative time formatting, and for the run-and-save rule (new versus update) in a view model that takes a `SnippetStore` and a runner closure, so no real process is needed.
