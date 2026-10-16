@@ -1,6 +1,6 @@
 # Spec 005: Code editor
 
-Status: In progress
+Status: Done
 Depends on: 004
 Size estimate: M (about 400 hand-written lines including tests, excluding the vendored editor bundle)
 
@@ -30,14 +30,14 @@ Everything after the quick run popover needs a real code editor: highlighting, l
 - The theme follows Light, Dark or System from Settings, including when it changes while the window is open.
 
 ## Acceptance criteria
-- [ ] The editor shows Python with highlighting and line numbers, and matches the app's light or dark appearance.
-- [ ] Typing saves the snippet within about 300 ms of the last key, and reopening the app shows the edit.
+- [x] The editor shows Python with highlighting and line numbers, and matches the app's light or dark appearance.
+- [x] Typing saves the snippet within about 300 ms of the last key, and reopening the app shows the edit.
 - [x] The debouncer has tests: many changes in a burst cause one save, a final flush saves at once, and a save error is reported.
-- [ ] `EditorView.text` can be set from Swift without echoing `onChange`, and ⌘/ toggles comments.
-- [ ] Changing Appearance in Settings changes the open editor's theme.
-- [ ] If the bundle is missing, the fallback text box appears and text still saves.
+- [x] `EditorView.text` can be set from Swift without echoing `onChange`, and ⌘/ toggles comments.
+- [x] Changing Appearance in Settings changes the open editor's theme.
+- [x] If the bundle is missing, the fallback text box appears and text still saves.
 - [x] `scripts/build-editor.sh` reproduces the committed bundle (documented in the script header), and the app builds with `./scripts/build.sh` on a machine without npm.
-- [ ] `swift test` and `./scripts/build.sh` pass in CI.
+- [x] `swift test` and `./scripts/build.sh` pass in CI.
 
 ## Test plan
 - Swift Testing tests for the autosave debouncer (time injected, no real waiting).
