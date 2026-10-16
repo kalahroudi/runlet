@@ -8,12 +8,12 @@ Each line is one spec and one PR. Build in order. Specs 001 to 007 give a workin
 | 002 | Runner core | Run a Python string as a child process. Stream output, enforce a time limit, report exit status. | 001 |
 | 003 | Managed Python | Download and cache `uv` and Python 3.13. Create a fresh environment per snippet. | 002 |
 | 004 | [Snippet store](004-snippet-store.md) (done) | Save snippets as files on disk with metadata. List, open, rename, delete. | 001 |
-| 005 | [Editor and console](005-editor-console.md) (draft) | Window with a web-view editor (CodeMirror), Run button, console output. Scrolling areas hide the system scrollbar and use a styled, minimal scroll affordance (editor, console). | 002, 004 |
+| 005 | [Code editor](005-editor-console.md) (draft) | CodeMirror editor in a web view: Python highlighting, line numbers, light and dark themes, autosave to the snippet store. | 004 |
 | 006 | [Quick run popover](006-quick-run-popover.md) (in progress) | Paste into the menu bar popover, detect language, run, see output. | 002, 004 |
-| 007 | Missing packages (Python) | Detect imports, show the install bar, install on confirm, warn on unfamiliar names. | 003, 005 |
+| 007 | Missing packages (Python) | Detect imports, show the install bar, install on confirm, warn on unfamiliar names. | 003, 026 |
 | 008 | Sandbox | Run snippets with network and file access off. Per-snippet toggles. | 002 |
-| 009 | Preview pane and inputs | HTML or SVG preview in a web view. Sliders for numbers found in code. | 005 |
-| 010 | MCP server | Local MCP tools: create_snippet, run, install_package, read_output. | 005, 008 |
+| 009 | Preview pane and inputs | HTML or SVG preview in a web view. Sliders for numbers found in code. | 026 |
+| 010 | MCP server | Local MCP tools: create_snippet, run, install_package, read_output. | 026, 008 |
 | 011 | Magic link | `runlet://open/<id>` opens a snippet with its preview. Add an `open` MCP tool. | 009, 010 |
 | 012 | Claude Code (headless) | Run Claude Code as a background process wired to the MCP server. Agents card in settings. | 010 |
 | 013 | ACP bridge | ACP client so Codex, Gemini CLI and other agents connect. | 010 |
@@ -29,5 +29,7 @@ Each line is one spec and one PR. Build in order. Specs 001 to 007 give a workin
 | 023 | [Native popover](023-native-popover.md) | Menu bar icon with a native popover anchored by an arrow, replacing the plain floating panel. | 001, 022 |
 | 024 | [Interactive input](024-run-input.md) (done) | Type answers to `input()` while a run is in progress. | 002, 006 |
 | 025 | [Run time limit](025-run-time-limit.md) (done) | Choose the run time limit in Settings (default 60 s, or none). Waiting for typed input does not count. | 002, 006, 024 |
+| 026 | [Main window with Run and console](026-main-window-console.md) (draft) | Snippet list, editor, Run and Stop, and a console with input. | 002, 004, 005, 024, 025 |
+| 027 | [Styled scrolling](027-styled-scrolling.md) (draft) | Hidden scrollbars, edge fades and a "Jump to latest" pill. | 026 |
 
 Specs after 001 are written one at a time, just before they are built, so they reflect what the earlier PRs actually delivered.
