@@ -1,6 +1,6 @@
 # Spec 024: Interactive input for runs
 
-Status: Draft
+Status: In progress
 Depends on: 002, 006
 Size estimate: S (about 250 lines including tests)
 
@@ -28,13 +28,14 @@ Code that calls `input()` fails today with `EOFError`, because a run has no keyb
 - Python prints prompts through a buffer, so the runner already starts it unbuffered (`-u`).
 
 ## Acceptance criteria
-- [ ] A test runs `sh -c 'read a; echo got:$a'` interactively, sends a line, and sees `got:` and the line back.
-- [ ] A test sends input after the program has exited and nothing crashes.
-- [ ] A test closes input and a program reading to end of file finishes.
-- [ ] Non-interactive runs still get an empty standard input (existing tests unchanged and green).
+- [x] A test runs `sh -c 'read a; echo got:$a'` interactively, sends a line, and sees `got:` and the line back.
+- [x] A test sends input after the program has exited and nothing crashes.
+- [x] A test closes input and a program reading to end of file finishes.
+- [x] Non-interactive runs still get an empty standard input (existing tests unchanged and green).
 - [ ] The sample with two `input()` calls and an `int()` conversion runs to the end in the popover when the answers are typed, and shows both prompts.
-- [ ] Stop and the 10 s limit still end a run that is waiting for input.
+- [ ] Stop and the 10 s limit limit still end a run that is waiting for input.
 - [ ] `swift test` and `./scripts/build.sh` pass in CI.
 
 ## Risks and open questions
-- A 10 s limit is short for someone typing. Proposal: the limit applies to time spent running, and waiting for input counts too for now. Revisit when settings can change the limit. The product owner decides.
+- Decided by the product owner: waiting for input counts toward the 10 s limit for now.
+- (Original note) A 10 s limit is short for someone typing. Proposal: the limit applies to time spent running, and waiting for input counts too for now. Revisit when settings can change the limit. The product owner decides.

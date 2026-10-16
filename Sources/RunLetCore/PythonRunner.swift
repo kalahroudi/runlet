@@ -13,32 +13,39 @@ public enum PythonRunner {
     }
 
     public static func run(source: String, interpreter: URL, timeout: TimeInterval = 10) -> AsyncStream<RunEvent> {
+        start(source: source, interpreter: interpreter, timeout: timeout).events
+    }
+
+    /// Like `run`, but the program can be typed to through the returned session.
+    public static func start(source: String, interpreter: URL, timeout: TimeInterval = 10,
+                             interactive: Bool = false) -> RunSession {
         let folder = FileManager.default.temporaryDirectory.appendingPathComponent("runlet-\(UUID().uuidString)")
         do {
             try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
             try source.write(to: folder.appendingPathComponent("main.py"), atomically: true, encoding: .utf8)
         } catch {
-            return AsyncStream { continuation in
+            return RunSession(events: AsyncStream { continuation in
                 continuation.yield(.finished(RunResult(
                     exitCode: nil, outcome: .failedToLaunch(error.localizedDescription), duration: 0)))
                 continuation.finish()
-            }
+            })
         }
 
         var environment = ProcessInfo.processInfo.environment
         environment["PYTHONDONTWRITEBYTECODE"] = "1"
         environment["PYTHONIOENCODING"] = "utf-8"
-        let events = ProcessRunner.run(RunRequest(
+        let inner = ProcessRunner.start(RunRequest(
             executable: interpreter, arguments: ["-u", "main.py"],
-            workingDirectory: folder, environment: environment, timeout: timeout))
+            workingDirectory: folder, environment: environment, timeout: timeout, interactive: interactive))
 
-        return AsyncStream { continuation in
+        let events = AsyncStream<RunEvent> { continuation in
             let forwarding = Task {
-                for await event in events { continuation.yield(event) }
+                for await event in inner.events { continuation.yield(event) }
                 try? FileManager.default.removeItem(at: folder)
                 continuation.finish()
             }
             continuation.onTermination = { _ in forwarding.cancel() }
         }
+        return RunSession(events: events, send: { inner.send($0) }, closeInput: { inner.closeInput() })
     }
 }
