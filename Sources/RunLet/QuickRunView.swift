@@ -11,67 +11,72 @@ extension QuickRunModel {
     }()
 }
 
+extension Language {
+    var dotColor: Color {
+        switch self {
+        case .python: Color(red: 0.216, green: 0.463, blue: 0.671)
+        case .javascript: Color(red: 0.941, green: 0.784, blue: 0.078)
+        case .typescript: Color(red: 0.192, green: 0.471, blue: 0.776)
+        case .go: Color(red: 0, green: 0.678, blue: 0.847)
+        case .rust: Color(red: 0.871, green: 0.647, blue: 0.518)
+        }
+    }
+}
+
+/// The popover body from the mock: language chips and Run, a detection line, the code card, Recent.
 struct QuickRunView: View {
     @ObservedObject var model: QuickRunModel = .shared
 
+    private var shown: Language { model.detected ?? .python }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            HStack {
-                RLSectionTitle("Code")
-                Spacer()
-                if !model.source.isEmpty {
-                    Button("New") { model.newSnippet() }.buttonStyle(.plain)
-                        .font(RLFont.body(12, .semibold)).foregroundStyle(Color.rlAccent)
-                }
-            }
-            HStack(alignment: .top, spacing: 8) {
-                codeBox
-                if model.isRunning {
-                    Button("Stop", action: model.stop).buttonStyle(.rlSmall)
-                } else {
-                    Button("▶ Run", action: model.startRun)
-                        .keyboardShortcut(.return, modifiers: .command)
-                        .buttonStyle(.rlSmallPrimary)
-                        .disabled(!model.canRun)
-                }
-            }
-            languageRow
+            header
             notice
-            if model.pythonAvailable {
-                if !model.chunks.isEmpty || model.isRunning || !model.status.isEmpty { output }
-            }
+            codeCard
             if !model.recent.isEmpty { recent }
         }
     }
 
-    private var codeBox: some View {
-        let lines = min(max(model.source.split(separator: "\n", omittingEmptySubsequences: false).count, 3), 8)
-        return TextEditor(text: $model.source)
-            .font(RLFont.mono(12.5))
-            .scrollContentBackground(.hidden)
-            .scrollIndicators(.hidden)
-            .padding(6)
-            .frame(height: CGFloat(lines) * 17 + 14)
-            .background(Color.rlCode, in: RoundedRectangle(cornerRadius: 10))
-            .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color.rlLine))
-            .overlay(alignment: .topLeading) {
-                if model.source.isEmpty {
-                    Text("Paste code here")
-                        .font(RLFont.mono(12.5)).foregroundStyle(Color.rlMuted)
-                        .padding(.horizontal, 11).padding(.vertical, 6).allowsHitTesting(false)
-                }
-            }
-    }
+    // MARK: Header
 
-    private var languageRow: some View {
+    private var header: some View {
         HStack(spacing: 6) {
-            ForEach(Language.allCases, id: \.self) { language in
-                RLChip(text: language == .python ? language.displayName : "\(language.displayName) · soon",
-                       selected: model.detected == language)
-                    .opacity(language == .python || model.detected == language ? 1 : 0.6)
+            RLChip(text: "Python", selected: shown == .python, dot: Language.python.dotColor)
+            if shown != .python {
+                RLChip(text: shown.displayName, selected: true, dot: shown.dotColor)
+            }
+            moreMenu
+            Spacer(minLength: 8)
+            if !model.source.isEmpty && !model.isRunning {
+                Button { model.newSnippet() } label: { Image(systemName: "square.and.pencil") }
+                    .buttonStyle(.rlIcon).help("New snippet")
+            }
+            if model.isRunning {
+                Button("Stop", action: model.stop).buttonStyle(.rlSmall)
+            } else {
+                Button("▶ Run", action: model.startRun)
+                    .keyboardShortcut(.return, modifiers: .command)
+                    .buttonStyle(.rlSmallPrimary)
+                    .disabled(!model.canRun)
             }
         }
-        .font(RLFont.body(11))
+    }
+
+    /// Python is the default. Every other runtime lives behind this menu.
+    private var moreMenu: some View {
+        Menu {
+            ForEach(Language.allCases.filter { $0 != .python && $0 != shown }, id: \.self) { language in
+                Button("\(language.displayName) · soon") {}.disabled(true)
+            }
+            Divider()
+            Button("Ruby, Swift, SQL and more later") {}.disabled(true)
+        } label: {
+            RLChip(text: "More ▾")
+        }
+        .menuStyle(.borderlessButton)
+        .menuIndicator(.hidden)
+        .fixedSize()
     }
 
     @ViewBuilder private var notice: some View {
@@ -80,31 +85,68 @@ struct QuickRunView: View {
                 .font(RLFont.body(12.5)).foregroundStyle(Color.rlMuted)
         } else if let language = model.detected {
             if language == .python {
-                RLStatusLine(text: "Detected Python from what you pasted", isOK: true)
+                RLStatusLine(text: "✓ Detected Python from what you pasted", isOK: true)
             } else {
                 RLStatusLine(text: "Looks like \(language.displayName). Only Python runs for now.")
             }
         }
     }
 
-    private var output: some View {
-        VStack(alignment: .leading, spacing: 6) {
+    // MARK: Code card
+
+    private var codeCard: some View {
+        VStack(spacing: 0) {
+            codeBox
             if !model.chunks.isEmpty {
+                divider
                 ScrollView {
                     outputText
                         .font(RLFont.mono(12.5))
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .textSelection(.enabled)
-                        .padding(8)
+                        .padding(.horizontal, 12).padding(.vertical, 8)
                 }
                 .scrollIndicators(.hidden)
-                .frame(height: 96)
-                .background(Color.rlCode, in: RoundedRectangle(cornerRadius: 10))
-                .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color.rlLine))
+                .frame(maxHeight: 110)
             }
-            RLStatusLine(text: model.isRunning ? "Running…" : model.status,
-                         isOK: model.status.hasPrefix("Finished"))
+            if model.isRunning || !model.status.isEmpty {
+                divider
+                VStack(alignment: .leading, spacing: 2) {
+                    let ok = model.status.hasPrefix("Finished")
+                    RLStatusLine(text: model.isRunning ? "Running…" : (ok ? "✓ " : "") + model.status,
+                                 isError: !model.isRunning && !ok && model.status.hasPrefix("Could not"),
+                                 isOK: ok)
+                    if model.waitedForInput {
+                        Text("This code waits for typed input. Runs have no keyboard input yet.")
+                            .font(RLFont.body(12)).foregroundStyle(Color.rlMuted)
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, 12).padding(.vertical, 8)
+            }
         }
+        .background(Color.rlCode, in: RoundedRectangle(cornerRadius: 12))
+        .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.rlLine))
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+    }
+
+    private var divider: some View { Rectangle().fill(Color.rlLine).frame(height: 1) }
+
+    private var codeBox: some View {
+        let lines = min(max(model.source.split(separator: "\n", omittingEmptySubsequences: false).count, 4), 9)
+        return TextEditor(text: $model.source)
+            .font(RLFont.mono(12.5))
+            .scrollContentBackground(.hidden)
+            .scrollIndicators(.hidden)
+            .padding(.horizontal, 7).padding(.vertical, 6)
+            .frame(height: CGFloat(lines) * 19 + 12)
+            .overlay(alignment: .topLeading) {
+                if model.source.isEmpty {
+                    Text("Paste code here…")
+                        .font(RLFont.mono(12.5)).foregroundStyle(Color.rlMuted)
+                        .padding(.horizontal, 12).padding(.vertical, 6).allowsHitTesting(false)
+                }
+            }
     }
 
     private var outputText: Text {
@@ -113,23 +155,37 @@ struct QuickRunView: View {
         }
     }
 
+    // MARK: Recent
+
     private var recent: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            RLSectionTitle("Recent")
+        VStack(alignment: .leading, spacing: 2) {
+            RLSectionTitle("Recent").padding(.bottom, 2)
             ForEach(model.recent) { snippet in
-                Button { model.load(snippet) } label: {
-                    HStack(spacing: 8) {
-                        Circle().fill(Color.rlAccent).frame(width: 7, height: 7)
-                        Text(snippet.title).font(RLFont.mono(12)).foregroundStyle(Color.rlInk).lineLimit(1)
-                        Spacer(minLength: 8)
-                        Text(RelativeTime.text(for: snippet.modified))
-                            .font(RLFont.body(11.5)).foregroundStyle(Color.rlMuted)
-                    }
-                    .padding(.vertical, 3)
-                    .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
+                RecentRow(snippet: snippet) { model.load(snippet) }
             }
         }
+    }
+}
+
+private struct RecentRow: View {
+    let snippet: Snippet
+    let action: () -> Void
+    @State private var hovering = false
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 10) {
+                Circle().fill(Language.python.dotColor).frame(width: 8, height: 8)
+                Text(snippet.title).font(RLFont.body(13, .medium)).foregroundStyle(Color.rlInk).lineLimit(1)
+                Spacer(minLength: 8)
+                Text(RelativeTime.text(for: snippet.modified))
+                    .font(RLFont.body(12)).foregroundStyle(Color.rlMuted)
+            }
+            .padding(.horizontal, 8).padding(.vertical, 6)
+            .background(hovering ? Color.rlSurface2 : .clear, in: RoundedRectangle(cornerRadius: 9))
+            .contentShape(RoundedRectangle(cornerRadius: 9))
+        }
+        .buttonStyle(.plain)
+        .onHover { hovering = $0 }
     }
 }

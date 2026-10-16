@@ -4,26 +4,27 @@ import RunLetCore
 struct PopoverView: View {
     var body: some View {
         VStack(spacing: 0) {
-            VStack(alignment: .leading, spacing: 12) {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("RunLet").font(RLFont.display(24))
-                    Text("Quick code, anywhere.").font(RLFont.body(13)).foregroundStyle(Color.rlMuted)
-                }
+            VStack(alignment: .leading, spacing: 10) {
                 UpdateBanner()
-                RLCard { QuickRunView() }
+                QuickRunView()
             }
-            .padding(14)
+            .padding(12)
 
-            HStack(spacing: 8) {
-                Button("Open in window ↗") { StatusBarController.shared.close(); AppWindows.main.show() }.buttonStyle(.rlSmall)
-                Button("Settings…") { StatusBarController.shared.close(); AppActivation.openSettings() }
-                    .buttonStyle(.rlSmall).keyboardShortcut(",")
+            HStack(spacing: 2) {
+                Text("RunLet · \(String(UpdateModel.shared.installedCommit.prefix(7)))")
+                    .font(RLFont.body(12)).foregroundStyle(Color.rlMuted)
                 Spacer()
-                Text(String(UpdateModel.shared.installedCommit.prefix(7))).font(RLFont.mono(11)).foregroundStyle(Color.rlMuted)
-                Button("Quit") { StatusBarController.shared.close(); NSApplication.shared.terminate(nil) }
-                    .buttonStyle(.rlSmall).keyboardShortcut("q")
+                Button { StatusBarController.shared.close(); AppWindows.main.show() } label: {
+                    Image(systemName: "arrow.up.forward.square")
+                }.buttonStyle(.rlIcon).help("Open in window")
+                Button { StatusBarController.shared.close(); AppActivation.openSettings() } label: {
+                    Image(systemName: "gearshape")
+                }.buttonStyle(.rlIcon).help("Settings (⌘,)").keyboardShortcut(",")
+                Button { StatusBarController.shared.close(); NSApplication.shared.terminate(nil) } label: {
+                    Image(systemName: "power")
+                }.buttonStyle(.rlIcon).help("Quit RunLet (⌘Q)").keyboardShortcut("q")
             }
-            .padding(.horizontal, 14).padding(.vertical, 10)
+            .padding(.horizontal, 12).padding(.vertical, 6)
             .background(Color.rlSurface2)
             .overlay(alignment: .top) { Rectangle().fill(Color.rlLine).frame(height: 1) }
         }

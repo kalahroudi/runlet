@@ -111,6 +111,20 @@ import Testing
         #expect(!noPython.canRun)
     }
 
+    @Test func explainsCodeThatWaitsForInput() async {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent("runlet-\(UUID().uuidString)")
+        let model = QuickRunModel(store: SnippetStore(root: root, useTrash: false), pythonAvailable: true) { _ in
+            AsyncStream { c in
+                c.yield(.output(.stderr, "EOFError: EOF when reading a line\n"))
+                c.yield(.finished(RunResult(exitCode: 1, outcome: .exited, duration: 0.1)))
+                c.finish()
+            }
+        }
+        model.source = "name = input('Name? ')"
+        await model.performRun()
+        #expect(model.waitedForInput)
+    }
+
     @Test func recentKeepsTheFourNewest() throws {
         let (model, store) = makeModel()
         for i in 0..<6 { _ = try store.create(source: "print(\(i))  # n") }
