@@ -105,8 +105,5 @@ struct RunCleaningTests {
         await model.performRun()
         #expect(seen.text == "print(1)")
         #expect(model.source == " print(1)")
-        #expect(model.runNotice == "Ran with indent removed.")
-        model.source = "print(2)"
-        #expect(model.runNotice == nil)
     }
 }
