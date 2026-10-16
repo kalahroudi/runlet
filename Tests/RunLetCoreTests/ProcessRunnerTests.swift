@@ -86,6 +86,49 @@ func shell(_ script: String, timeout: TimeInterval = 5) -> AsyncStream<RunEvent>
     }
 }
 
+@Suite struct InteractiveRunTests {
+    func session(_ script: String, timeout: TimeInterval = 5) -> RunSession {
+        ProcessRunner.start(RunRequest(executable: URL(fileURLWithPath: "/bin/sh"),
+                                       arguments: ["-c", script], timeout: timeout, interactive: true))
+    }
+
+    @Test func aTypedLineReachesTheProgram() async {
+        let run = session("printf 'name? '; read a; echo got:$a")
+        run.send("ada\n")
+        let out = await collect(run.events)
+        #expect(out.stdout == "name? got:ada\n")
+        #expect(out.result?.exitCode == 0)
+    }
+
+    @Test func sendingAfterExitIsHarmless() async {
+        let run = session("echo done")
+        let out = await collect(run.events)
+        #expect(out.stdout == "done\n")
+        run.send("late\n")
+        run.closeInput()
+        run.send("later\n")
+    }
+
+    @Test func closingInputEndsAProgramThatReadsToTheEnd() async {
+        let run = session("cat | wc -l")
+        run.send("a\nb\n")
+        run.closeInput()
+        let out = await collect(run.events)
+        #expect(out.stdout.trimmingCharacters(in: .whitespaces) == "2\n")
+    }
+
+    @Test func nonInteractiveRunsGetEmptyInput() async {
+        let out = await collect(shell("read a; echo [$a]"))
+        #expect(out.stdout == "[]\n")
+    }
+
+    @Test func theTimeLimitStillEndsARunWaitingForInput() async {
+        let run = session("read a", timeout: 0.3)
+        let out = await collect(run.events)
+        #expect(out.result?.outcome == .timedOut)
+    }
+}
+
 @Suite struct RunSummaryTests {
     @Test func describesEachOutcome() {
         #expect(RunResult(exitCode: 0, outcome: .exited, duration: 0.038).summary(timeLimit: 10) == "Finished in 38 ms")

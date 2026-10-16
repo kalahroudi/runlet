@@ -12,7 +12,7 @@ public struct OutputChunk: Identifiable, Sendable {
 public final class QuickRunModel: ObservableObject {
     nonisolated public static let timeLimit: TimeInterval = 10
     private static let outputLimit = 100_000
-    public typealias Runner = @Sendable (String) -> AsyncStream<RunEvent>
+    public typealias Runner = @Sendable (String) -> RunSession
 
     @Published public var source = "" {
         didSet { if source.isEmpty { currentID = nil } }
@@ -28,6 +28,7 @@ public final class QuickRunModel: ObservableObject {
     private let runner: Runner
     private var task: Task<Void, Never>?
     private var shown = 0
+    private var session: RunSession?
 
     public init(store: SnippetStore, pythonAvailable: Bool, runner: @escaping Runner) {
         self.store = store
@@ -42,11 +43,6 @@ public final class QuickRunModel: ObservableObject {
     public var canRun: Bool {
         pythonAvailable && !source.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
             && (detected ?? .python) == .python
-    }
-
-    /// The code called `input()`, but runs have no keyboard input yet, so Python hit end of input.
-    public var waitedForInput: Bool {
-        !isRunning && source.contains("input(") && chunks.contains { $0.isError && $0.text.contains("EOFError") }
     }
 
     public func startRun() {
@@ -73,10 +69,23 @@ public final class QuickRunModel: ObservableObject {
             isRunning = false
             return
         }
-        for await event in runner(source) { handle(event) }
+        let current = runner(source)
+        session = current
+        for await event in current.events { handle(event) }
+        session = nil
         if Task.isCancelled { status = "Stopped" }
         isRunning = false
     }
+
+    /// Types a line to the running program and shows it in the output like a terminal would.
+    public func sendInput(_ line: String) {
+        guard isRunning, let session else { return }
+        session.send(line + "\n")
+        append(line + "\n", isError: false)
+    }
+
+    /// Ends input, like Ctrl-D.
+    public func endInput() { session?.closeInput() }
 
     public func newSnippet() {
         guard !isRunning else { return }

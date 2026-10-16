@@ -52,12 +52,12 @@ import Testing
         let root = FileManager.default.temporaryDirectory.appendingPathComponent("runlet-\(UUID().uuidString)")
         let store = SnippetStore(root: root, useTrash: false)
         let model = QuickRunModel(store: store, pythonAvailable: python) { _ in
-            AsyncStream { c in
+            RunSession(events: AsyncStream { c in
                 c.yield(.output(.stdout, "hi\n"))
                 c.yield(.output(.stderr, "oops\n"))
                 c.yield(.finished(RunResult(exitCode: 0, outcome: .exited, duration: 0.01)))
                 c.finish()
-            }
+            })
         }
         return (model, store)
     }
@@ -111,25 +111,11 @@ import Testing
         #expect(!noPython.canRun)
     }
 
-    @Test func explainsCodeThatWaitsForInput() async {
-        let root = FileManager.default.temporaryDirectory.appendingPathComponent("runlet-\(UUID().uuidString)")
-        let model = QuickRunModel(store: SnippetStore(root: root, useTrash: false), pythonAvailable: true) { _ in
-            AsyncStream { c in
-                c.yield(.output(.stderr, "EOFError: EOF when reading a line\n"))
-                c.yield(.finished(RunResult(exitCode: 1, outcome: .exited, duration: 0.1)))
-                c.finish()
-            }
-        }
-        model.source = "name = input('Name? ')"
-        await model.performRun()
-        #expect(model.waitedForInput)
-    }
-
     @Test func recentKeepsTheFourNewest() throws {
         let (model, store) = makeModel()
         for i in 0..<6 { _ = try store.create(source: "print(\(i))  # n") }
         model.load(store.list()[0])
         #expect(store.list().count == 6)
-        #expect(QuickRunModel(store: store, pythonAvailable: true) { _ in AsyncStream { $0.finish() } }.recent.count == 4)
+        #expect(QuickRunModel(store: store, pythonAvailable: true) { _ in RunSession(events: AsyncStream { $0.finish() }) }.recent.count == 4)
     }
 }

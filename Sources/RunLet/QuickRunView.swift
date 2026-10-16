@@ -5,8 +5,9 @@ extension QuickRunModel {
     static let shared: QuickRunModel = {
         let interpreter = PythonRunner.findInterpreter()
         return QuickRunModel(store: SnippetStore(), pythonAvailable: interpreter != nil) { source in
-            guard let interpreter else { return AsyncStream { $0.finish() } }
-            return PythonRunner.run(source: source, interpreter: interpreter, timeout: QuickRunModel.timeLimit)
+            guard let interpreter else { return RunSession(events: AsyncStream { $0.finish() }) }
+            return PythonRunner.start(source: source, interpreter: interpreter,
+                                      timeout: QuickRunModel.timeLimit, interactive: true)
         }
     }()
 }
@@ -109,6 +110,10 @@ struct QuickRunView: View {
                 .scrollIndicators(.hidden)
                 .frame(maxHeight: 110)
             }
+            if model.isRunning {
+                divider
+                InputLine(model: model)
+            }
             if model.isRunning || !model.status.isEmpty {
                 divider
                 VStack(alignment: .leading, spacing: 2) {
@@ -116,10 +121,6 @@ struct QuickRunView: View {
                     RLStatusLine(text: model.isRunning ? "Running…" : (ok ? "✓ " : "") + model.status,
                                  isError: !model.isRunning && !ok && model.status.hasPrefix("Could not"),
                                  isOK: ok)
-                    if model.waitedForInput {
-                        Text("This code waits for typed input. Runs have no keyboard input yet.")
-                            .font(RLFont.body(12)).foregroundStyle(Color.rlMuted)
-                    }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.horizontal, 12).padding(.vertical, 8)
@@ -187,5 +188,28 @@ private struct RecentRow: View {
         }
         .buttonStyle(.plain)
         .onHover { hovering = $0 }
+    }
+}
+
+/// Where the person types answers while a program is running.
+private struct InputLine: View {
+    @ObservedObject var model: QuickRunModel
+    @State private var text = ""
+    @FocusState private var focused: Bool
+
+    var body: some View {
+        HStack(spacing: 8) {
+            Text("›").font(RLFont.mono(13)).foregroundStyle(Color.rlAccent)
+            TextField("Type input, press Return", text: $text)
+                .textFieldStyle(.plain)
+                .font(RLFont.mono(12.5))
+                .focused($focused)
+                .onSubmit { model.sendInput(text); text = "" }
+            Button { model.endInput() } label: { Image(systemName: "arrow.down.to.line") }
+                .buttonStyle(.rlIcon).help("End input (⌘D)")
+                .keyboardShortcut("d", modifiers: .command)
+        }
+        .padding(.leading, 12).padding(.trailing, 4).padding(.vertical, 2)
+        .onAppear { focused = true }
     }
 }
