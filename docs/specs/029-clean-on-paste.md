@@ -1,6 +1,6 @@
 # Spec 029: Clean on paste
 
-Status: Draft
+Status: In progress
 Depends on: 005, 006, 026, 028
 Size estimate: M (about 400 lines including tests)
 
@@ -24,7 +24,7 @@ Spec 028 made runs forgiving: a pasted block with a stray indent now runs. But t
 - **Undo gives back the original paste.** The original text is inserted first and the cleaned text replaces it as a second, separate undo step, so one ⌘Z shows exactly what was on the clipboard and a second removes the paste.
 - **Popover and fallback box:** an `NSTextView` subclass overrides `paste(_:)`. It reads the plain text from the pasteboard, cleans it, and inserts both steps through the text view's undo manager. The view keeps the monospaced font, transparent background, hidden scrollers and growth rules of the current box.
 - **Editor:** the page intercepts the `paste` event, cancels it and sends the clipboard text to Swift through a message with a reply (`WKScriptMessageHandlerWithReply`). Swift answers with `{text, notice}`. The page then inserts the original and the cleaned text as two history events. If Swift does not answer, the page inserts the original text unchanged.
-- The notice is held in `QuickRunModel` (`pasteNotice`), shown in the popover under the code and in the window under the editor, and cleared when the text changes by anything other than the paste itself.
+- The notice is held in `QuickRunModel` (`pasteNotice`, set with `showPasteNotice` after the text is inserted), shown in the popover under the code and in the window under the editor, and cleared when the text changes by anything other than the paste itself.
 - Pasting a single word or short line is almost never changed by the cleaner. A rule that fires on one line (a lone leading space, a lone fence) still applies.
 
 ## Acceptance criteria
@@ -38,7 +38,7 @@ Spec 028 made runs forgiving: a pasted block with a stray indent now runs. But t
 - [ ] `swift test` and `./scripts/build.sh` pass in CI.
 
 ## Test plan
-- Swift Testing tests for the model: `QuickRunModel.cleanPaste(_:)` returns the cleaned text and sets and clears `pasteNotice`; clean input returns the same text and no notice.
+- Swift Testing tests for the model: `QuickRunModel.showPasteNotice` sets `pasteNotice` and the next edit clears it. The cleaner itself is covered by spec 028. The two-step undo of the popover box was checked in a scratch harness (paste, undo, undo).
 - The editor bundle is rebuilt with `scripts/build-editor.sh` (paste handler); its hash is updated in the PR.
 - Manual, listed in the PR: the three pastes into the popover and the editor, undo twice, paste into the middle of code, clean paste with no notice, light and dark look unchanged.
 

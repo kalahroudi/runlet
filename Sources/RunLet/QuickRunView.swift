@@ -83,7 +83,9 @@ struct QuickRunView: View {
     }
 
     @ViewBuilder private var notice: some View {
-        if !model.pythonAvailable {
+        if let pasted = model.pasteNotice {
+            RLStatusLine(text: pasted, isOK: true)
+        } else if !model.pythonAvailable {
             Text("Python 3 was not found. Install it with `brew install python`. RunLet will manage Python for you in a later update.")
                 .font(RLFont.body(12.5)).foregroundStyle(Color.rlMuted)
         } else if let language = model.detected {
@@ -109,12 +111,8 @@ struct QuickRunView: View {
 
     private var codeBox: some View {
         let lines = min(max(model.source.split(separator: "\n", omittingEmptySubsequences: false).count, 4), 9)
-        return TextEditor(text: $model.source)
-            .font(RLFont.mono(12.5))
-            .scrollContentBackground(.hidden)
-            .scrollIndicators(.hidden)
-            .noScrollers()
-            .padding(.horizontal, 7).padding(.vertical, 6)
+        return PasteTextView(text: $model.source, fontSize: 12.5, onCleanedPaste: model.showPasteNotice)
+            .padding(.horizontal, 12).padding(.vertical, 6)
             .frame(height: CGFloat(lines) * 19 + 12)
             .overlay(alignment: .topLeading) {
                 if model.source.isEmpty {

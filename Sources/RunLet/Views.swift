@@ -76,17 +76,30 @@ struct MainWindowView: View {
         .padding(.horizontal, 16).padding(.vertical, 10)
     }
 
+    @ViewBuilder private var pasteNotice: some View {
+        if let text = run.pasteNotice {
+            RLStatusLine(text: text, isOK: true)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, 12).padding(.vertical, 6)
+                .background(Color.rlCode)
+        }
+    }
+
     @ViewBuilder private var editor: some View {
         if model.usesFallback {
             VStack(alignment: .leading, spacing: 0) {
                 Text("The code editor could not load, so this is a plain text box. Your text still saves.")
                     .font(RLFont.body(12)).foregroundStyle(Color.rlMuted).padding(10)
-                TextEditor(text: $run.source).font(RLFont.mono(13))
-                    .scrollContentBackground(.hidden).noScrollers().background(Color.rlCode)
+                PasteTextView(text: $run.source, fontSize: 13, onCleanedPaste: run.showPasteNotice)
+                    .padding(.horizontal, 12).background(Color.rlCode)
+                pasteNotice
             }
         } else {
-            EditorView(text: $run.source, onFailure: { model.usesFallback = true })
-                .background(Color.rlCode)
+            VStack(spacing: 0) {
+                EditorView(text: $run.source, onFailure: { model.usesFallback = true })
+                    .background(Color.rlCode)
+                pasteNotice
+            }
         }
     }
 }
