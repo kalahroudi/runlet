@@ -10,6 +10,7 @@ This page records how the `dsh-super-agent` deployment is wired to this reposito
 | State directory | `/Users/mohammadramezanian/.dsh/state/superagent` |
 | GitHub Source | `kalahroudi/runlet` |
 | Agent CLI | `/Users/mohammadramezanian/.local/bin/gh-agent` |
+| Agent account | `kalahroudi-agent` once the switch is complete; the trial wrapper uses `@kalahroudi` until then |
 | Base clone for worktrees | `/Users/mohammadramezanian/src/runlet` |
 | Executor workers | `maxWorkers: 1` |
 | Accept mode | `observe`; only explicit requests from the allowed list start work |
@@ -48,10 +49,21 @@ This deployment currently uses a trial wrapper that runs the owner's own `gh`, s
 
 ## Switch to a dedicated agent account
 
-The operator does these steps; an agent can prepare the wrapper and update the Source afterwards.
+Recommended account: **`kalahroudi-agent`** (available on GitHub, not tied to one repository, so it can serve other projects later). The operator does the account steps; an agent can prepare the wrapper and update the Source afterwards.
 
-1. Create a GitHub user for the agent (for example `runlet-agent`) and invite it as a collaborator with write access to `kalahroudi/runlet`. Accept the invitation as the agent.
-2. Replace the trial wrapper with one that uses a separate config directory:
+1. Create the GitHub user `kalahroudi-agent` at <https://github.com/signup> with an email you control. Verify the email and enable 2FA. It is a normal user account, not a GitHub App; super-agent reads its notifications.
+2. Invite `kalahroudi-agent` to `kalahroudi/runlet` with **Write** access (repo → Settings → Collaborators → Add people). Accept the invitation while signed in as the agent.
+3. Sign the CLI in under a separate config directory *before* replacing the trial wrapper, so the running service keeps working until the new account is ready:
+
+   ```sh
+   mkdir -p ~/.config/gh-agent
+   chmod 700 ~/.config/gh-agent
+   GH_CONFIG_DIR="$HOME/.config/gh-agent" gh auth login
+   GH_CONFIG_DIR="$HOME/.config/gh-agent" gh api user --jq .login
+   ```
+
+   The last command must print `kalahroudi-agent`, not `kalahroudi`.
+4. Replace the trial wrapper with one that uses that config directory:
 
    ```sh
    mkdir -p ~/.local/bin
@@ -60,13 +72,13 @@ The operator does these steps; an agent can prepare the wrapper and update the S
    GH_CONFIG_DIR="$HOME/.config/gh-agent" exec gh "$@"
    EOF
    chmod +x ~/.local/bin/gh-agent
-   gh-agent auth login
    gh-agent api user --jq .login
    ```
 
-   The last command must print the agent login, not `kalahroudi`.
-3. In the Superagent panel, open **Settings → Sources → GitHub** and save the card (or choose **Check again**). Setup checks that the account can push to `kalahroudi/runlet` and restarts the service. `scripts/dsh-superagent status` must exit 0.
-4. Confirm no other part reports an error, then follow the trigger protocol below.
+5. In the Superagent panel, open **Settings → Sources → GitHub** and save the card (or choose **Check again**). Setup checks that the account can push to `kalahroudi/runlet` and restarts the service. `scripts/dsh-superagent status` must exit 0.
+6. Confirm no other part reports an error, then follow the trigger protocol below.
+
+Keep `kalahroudi` as the only entry under **Settings → Policy → GitHub → allowed**. The agent account is the one doing the work, not a person who may ask for it; adding it to the allowed list would let it authorize itself.
 
 ## Trigger protocol
 
