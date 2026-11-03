@@ -30,6 +30,23 @@ git -C /Users/mohammadramezanian/src/runlet worktree add \
 
 The prompts add a RunLet section: one spec per PR, the spec-only phase stops before code, the build PR updates the spec status and criteria and the roadmap row, `swift test` and `./scripts/build.sh` run, and a person merges every PR.
 
+## One-command setup
+
+`scripts/setup-agent-account.sh` walks the whole sequence and pauses at the two browser gates (signup, collaborator invite). After those, it:
+
+- signs the CLI in under `~/.config/gh-agent`;
+- checks that it acts as `kalahroudi-agent` and can push to `kalahroudi/runlet`;
+- replaces the trial wrapper, keeping the old one as `gh-agent.trial.bak`;
+- with `--activate`, saves the GitHub Source, waits for setup to resolve the agent account, runs `scripts/dsh-superagent status`, and posts the first trigger on issue #36.
+
+```sh
+./scripts/setup-agent-account.sh --activate
+```
+
+Use `--check` to report the current wrapper, dedicated login and Source account without changing anything. Without `--activate`, the script stops after the wrapper and leaves the Source save and trigger to the agent.
+
+The manual steps below are the same sequence, for when something needs to be done by hand.
+
 ## The one rule that blocks trial mode
 
 The GitHub Source drops every message authored by the agent account. If the agent CLI is signed in as the same account that triggers it, the trigger never becomes a ticket.
