@@ -33,7 +33,18 @@ The prompts add a RunLet section: one spec per PR, the spec-only phase stops bef
 
 The GitHub Source drops every message authored by the agent account. If the agent CLI is signed in as the same account that triggers it, the trigger never becomes a ticket.
 
-This deployment currently uses a trial wrapper that runs the owner's own `gh`, signed in as `@kalahroudi`. That is enough for the setup checks and for opening PRs, but a comment from `@kalahroudi` mentioning `@kalahroudi` is dropped. **A dedicated agent account is required before the queue can start.**
+This deployment currently uses a trial wrapper that runs the owner's own `gh`, signed in as `@kalahroudi`. That is enough for the setup checks and for opening PRs, but a comment from `@kalahroudi` mentioning `@kalahroudi` is dropped.
+
+**Minimum to start:** a GitHub account that is not the agent account must send the trigger. The agent may still act as `@kalahroudi`, but every PR and comment is then attributed to the owner.
+
+**Recommended:** a dedicated agent account, so the agent's work is visibly its own. The steps are below.
+
+### Trial-mode workaround
+
+1. Use or create a second GitHub account. The repository is public, so it needs no collaborator access to open an issue or comment; it only needs to be on the Policy's GitHub allowed list.
+2. Add its login under **Settings → Policy → GitHub → allowed**.
+3. From that account, comment on the chosen issue mentioning the agent: `@kalahroudi deliver this issue`.
+4. The agent acts as `@kalahroudi`: its commits, PRs and comments appear under the owner's name. Use this only to try the flow; switch to a dedicated agent account before relying on attribution.
 
 ## Switch to a dedicated agent account
 
