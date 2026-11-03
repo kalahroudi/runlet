@@ -39,3 +39,4 @@ Deliver one spec-only PR.
 - `./scripts/build.sh` builds `build/RunLet.app`.
 - `scripts/build-editor.sh` rebuilds the committed CodeMirror bundle (needs Node).
 - Do not use ⌘⇧R for anything; the Capture shortcut is ⌃⌥C.
+- Operator setup and the trigger protocol: `docs/agents/super-agent.md`.
